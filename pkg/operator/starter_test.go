@@ -2,15 +2,18 @@ package operator
 
 import (
 	"context"
-	"github.com/openshift/library-go/pkg/controller/controllercmd"
-	"github.com/openshift/library-go/pkg/operator/events"
-	"github.com/stretchr/testify/assert"
+	"time"
+	"testing"
+
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/record"
-	"testing"
-	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/library-go/pkg/controller/controllercmd"
+	"github.com/openshift/library-go/pkg/operator/events"
 )
 
 const (
@@ -25,7 +28,6 @@ func fakeKubeConfig() *rest.Config {
 }
 
 func fakeEventRecorder() events.Recorder {
-	//clientset := kubernetes.NewForConfigOrDie(kubeconfig)
 	clientset := fake.NewSimpleClientset()
 	controllerRef, _ := events.GetControllerReferenceForCurrentPod(clientset, Namespace, nil)
 	eventRecorder := events.NewKubeRecorderWithOptions(

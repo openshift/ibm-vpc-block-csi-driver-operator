@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	//"k8s.io/client-go/dynamic"
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
@@ -28,7 +27,6 @@ const (
 	defaultNamespace = "openshift-cluster-csi-drivers"
 	operatorName     = "ibm-vpc-block-csi-driver-operator"
 	operandName      = "ibm-vpc-block-csi-driver"
-	//secretName       = "storage-secret-store"
 	instanceName = "vpc.block.csi.ibm.io"
 )
 
@@ -49,11 +47,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		return err
 	}
 
-	//dynamicClient, err := dynamic.NewForConfig(controllerConfig.KubeConfig)
-	//if err != nil {
-	//	return err
-	//}
-
 	csiControllerSet := csicontrollerset.NewCSIControllerSet(
 		operatorClient,
 		controllerConfig.EventRecorder,
@@ -67,10 +60,8 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		generated.Asset,
 		[]string{
 			"configmap.yaml",
-			//"controller.yaml",
 			"controller_sa.yaml",
 			"csidriver.yaml",
-			//"node.yaml",
 			"node_sa.yaml",
 			"rbac/attacher_role.yaml",
 			"rbac/attacher_rolebinding.yaml",
@@ -93,11 +84,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeInformersForNamespaces.InformersFor(defaultNamespace),
 		configInformers,
 		csidrivercontrollerservicecontroller.WithObservedProxyDeploymentHook(),
-		//csidrivercontrollerservicecontroller.WithSecretHashAnnotationHook(
-		//	defaultNamespace,
-		//	secretName,
-		//	secretInformer,
-		//),
 	).WithCSIDriverNodeService(
 		"IBMBlockDriverNodeServiceController",
 		generated.MustAsset,
@@ -105,11 +91,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(defaultNamespace),
 		csidrivernodeservicecontroller.WithObservedProxyDaemonSetHook(),
-	//).WithServiceMonitorController(
-	//	"GCPPDDriverServiceMonitorController",
-	//	dynamicClient,
-	//	generated.Asset,
-	//	"servicemonitor.yaml",
 	).WithExtraInformers(secretInformer.Informer())
 
 	if err != nil {
