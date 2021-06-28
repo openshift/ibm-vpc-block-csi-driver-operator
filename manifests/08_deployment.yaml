@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ibm-vpc-block-csi-driver-operator
+  namespace: openshift-cluster-csi-drivers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ibm-vpc-block-csi-driver-operator
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        name: ibm-vpc-block-csi-driver-operator
+    spec:
+      containers:
+      - args:
+        - start
+        env:
+        - name: DRIVER_IMAGE
+          value: icr.io/ibm/ibm-vpc-block-csi-driver:v3.0.0
+        - name: PROVISIONER_IMAGE
+          value: quay.io/k8scsi/csi-provisioner:v1.6.0
+        - name: ATTACHER_IMAGE
+          value: quay.io/k8scsi/csi-attacher:v2.2.0
+        - name: NODE_DRIVER_REGISTRAR_IMAGE
+          value: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+        - name: LIVENESS_PROBE_IMAGE
+          value: quay.io/k8scsi/livenessprobe:v2.0.0
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: gayathrimenathibm/ibm-vpc-block-csi-driver-operator:latest
+        imagePullPolicy: Always
+        name: ibm-vpc-block-csi-driver-operator
+      priorityClassName: system-cluster-critical
+      serviceAccountName: ibm-vpc-block-csi-driver-operator
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: "NoSchedule"
