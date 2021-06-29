@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app: ibm-vpc-block-csi-driver
+  name: ibm-vpc-block-csi-controller
+  namespace: openshift-cluster-csi-drivers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ibm-vpc-block-csi-driver
+  template:
+    metadata:
+      labels:
+        app: ibm-vpc-block-csi-driver
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000160009
+      containers:
+        - args:
+            - --v=5
+            - --csi-address=$(ADDRESS)
+            - --timeout=600s
+            - --feature-gates=Topology=true
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          image: ${PROVISIONER_IMAGE}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          imagePullPolicy: Always
+          name: csi-provisioner
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+            - --timeout=900s
+          image: ${ATTACHER_IMAGE}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          imagePullPolicy: Always
+          name: csi-attacher
+          resources:
+            limits:
+              cpu: 100m
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - args:
+            - --csi-address=/csi/csi.sock
+          image: ${LIVENESS_PROBE_IMAGE}
+          name: liveness-probe
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              cpu: 50m
+              memory: 50Mi
+            requests:
+              cpu: 5m
+              memory: 10Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - args:
+            - --v=5
+            - --endpoint=$(CSI_ENDPOINT)
+            - --lock_enabled=false
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          envFrom:
+            - configMapRef:
+                name: ibm-vpc-block-csi-configmap
+          image: ${DRIVER_IMAGE}
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          name: iks-vpc-block-driver
+          ports:
+            - containerPort: 9808
+              name: healthz
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 500Mi
+            requests:
+              cpu: 50m
+              memory: 100Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /etc/storage_ibmc
+              name: customer-auth
+              readOnly: true
+            - mountPath: /etc/storage_ibmc/cluster_info
+              name: cluster-info
+              readOnly: true
+      serviceAccountName: ibm-vpc-block-controller-sa
+      volumes:
+        - emptyDir: {}
+          name: socket-dir
+        - name: customer-auth
+          secret:
+            secretName: storage-secret-store
+        - configMap:
+            name: cluster-info
+          name: cluster-info

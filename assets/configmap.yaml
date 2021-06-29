@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app: ibm-vpc-block-csi-driver
+  name: ibm-vpc-block-csi-configmap
+  namespace: openshift-cluster-csi-drivers
+data:
+  CSI_ENDPOINT: unix:/csi/csi.sock
+  IKS_BLOCK_PROVIDER_NAME: iks-vpc
+  IKS_ENABLED: "False"
+  SECRET_CONFIG_PATH: /etc/storage_ibmc
+  VPC_API_GENERATION: "1"
+  VPC_API_TIMEOUT: 180s
+  VPC_API_VERSION: "2019-07-02"
+  VPC_BLOCK_PROVIDER_NAME: vpc
+  VPC_ENABLED: "True"
+  VPC_RETRY_ATTEMPT: "10"
+  VPC_RETRY_INTERVAL: "120"
