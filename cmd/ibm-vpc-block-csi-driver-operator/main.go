@@ -16,8 +16,8 @@ import (
 
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
 
-	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/operator"
-	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/version"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/operator"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/version"
 )
 
 func main() {

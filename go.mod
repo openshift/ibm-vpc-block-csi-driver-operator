@@ -1,4 +1,4 @@
-module github.com/openshift/ibm-vpc-block-csi-driver-operator
+module github.com/IBM/ibm-vpc-block-csi-driver-operator
 
 go 1.15
 

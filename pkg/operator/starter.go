@@ -19,7 +19,7 @@ import (
 	goc "github.com/openshift/library-go/pkg/operator/genericoperatorclient"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 
-	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/generated"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/generated"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 	defaultNamespace = "openshift-cluster-csi-drivers"
 	operatorName     = "ibm-vpc-block-csi-driver-operator"
 	operandName      = "ibm-vpc-block-csi-driver"
-	instanceName = "vpc.block.csi.ibm.io"
+	instanceName     = "vpc.block.csi.ibm.io"
 )
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
