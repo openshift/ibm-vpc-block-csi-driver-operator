@@ -32,7 +32,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: gayathrimenathibm/ibm-vpc-block-csi-driver-operator:latest
+        image: ocs-roks-team/origin-ibm-vpc-block-csi-driver-operator:latest
         imagePullPolicy: Always
         name: ibm-vpc-block-csi-driver-operator
       priorityClassName: system-cluster-critical
