@@ -1,18 +1,18 @@
 FROM golang:1.15.9 as builder
 
-WORKDIR /go/src/github.com/openshift/ibm-vpc-block-csi-driver-operator
-ADD . /go/src/github.com/openshift/ibm-vpc-block-csi-driver-operator
+WORKDIR /go/src/github.com/IBM/ibm-vpc-block-csi-driver-operator
+ADD . /go/src/github.com/IBM/ibm-vpc-block-csi-driver-operator
 
 ARG TAG
 ARG OS
 ARG ARCH
 
-RUN cd /go/src/github.com/openshift/ibm-vpc-block-csi-driver-operator
+RUN cd /go/src/github.com/IBM/ibm-vpc-block-csi-driver-operator
 RUN go mod vendor
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o ibm-vpc-block-csi-driver-operator cmd/ibm-vpc-block-csi-driver-operator/main.go
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4-200
-COPY --from=builder /go/src/github.com/openshift/ibm-vpc-block-csi-driver-operator/ibm-vpc-block-csi-driver-operator /usr/bin
+COPY --from=builder /go/src/github.com/IBM/ibm-vpc-block-csi-driver-operator/ibm-vpc-block-csi-driver-operator /usr/bin
 COPY manifests /manifests
 RUN chmod +x /usr/bin/ibm-vpc-block-csi-driver-operator
 ENTRYPOINT ["/usr/bin/ibm-vpc-block-csi-driver-operator"]
