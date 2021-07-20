@@ -19,24 +19,15 @@ check: | verify test-unit
 #IMAGE_REGISTRY?=icr.io/ibm
 IMAGE_REGISTRY?=quay.io/ocs-roks-team
 
-# This will call a macro called "build-image" which will generate image specific targets based on the parameters:
-# $0 - macro name
-# $1 - target name
-# $2 - image ref
-# $3 - Dockerfile path
-# $4 - context directory for image build
-# It will generate target "image-$(1)" for building the image and binding it as a prerequisite to target "images".
-#$(call build-image,ibm-vpc-block-csi-driver-operator,$(IMAGE_REGISTRY)/ibm-vpc-block-csi-driver-operator,./Dockerfile.rhel7,.)
-$(call build-image,origin-ibm-vpc-block-csi-driver-operator,$(IMAGE_REGISTRY)/origin-ibm-vpc-block-csi-driver-operator,./Dockerfile.rhel7,.)
-
-# generate bindata targets
-# $0 - macro name
-# $1 - target suffix
-# $2 - input dirs
-# $3 - prefix
-# $4 - pkg
-# $5 - output
-$(call add-bindata,generated,./assets/...,assets,generated,pkg/generated/bindata.go)
+## This will call a macro called "build-image" which will generate image specific targets based on the parameters:
+## $0 - macro name
+## $1 - target name
+## $2 - image ref
+## $3 - Dockerfile path
+## $4 - context directory for image build
+## It will generate target "image-$(1)" for building the image and binding it as a prerequisite to target "images".
+##$(call build-image,ibm-vpc-block-csi-driver-operator,$(IMAGE_REGISTRY)/ibm-vpc-block-csi-driver-operator,./Dockerfile.rhel7,.)
+$(call build-image,origin-ibm-vpc-block-csi-driver-operator,$(IMAGE_REGISTRY)/origin-ibm-vpc-block-csi-driver-operator,./Dockerfile,.)
 
 clean:
 	$(RM) origin-ibm-vpc-block-csi-driver-operator

@@ -2,8 +2,8 @@ package operator
 
 import (
 	"context"
-	"time"
 	"testing"
+	"time"
 
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
