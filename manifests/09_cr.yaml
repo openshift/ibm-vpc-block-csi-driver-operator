@@ -1,0 +1,8 @@
+apiVersion: operator.openshift.io/v1
+kind: ClusterCSIDriver
+metadata:
+  name: vpc.block.csi.ibm.io
+spec:
+  logLevel: Debug
+  managementState: Managed
+  operatorLogLevel: Debug
