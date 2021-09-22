@@ -1,0 +1,16 @@
+apiVersion: v1
+imagePullSecrets:
+  - name: kube-system-icr-io
+  - name: bluemix-default-secret
+  - name: bluemix-default-secret-regional
+  - name: bluemix-default-secret-international
+  - name: icr-io-secret
+kind: ServiceAccount
+metadata:
+  annotations:
+    version: 2.0.3_354
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app: ibm-vpc-block-csi-driver
+  name: ibm-vpc-block-node-sa
+  namespace: openshift-cluster-csi-drivers
