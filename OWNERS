@@ -2,7 +2,7 @@ approvers:
 - jsafrane
 - tsmetana
 - gnufied
-- bertinatto
 - dobsonj
+- bertinatto
 component: "Storage"
 subcomponent: "Operators"
