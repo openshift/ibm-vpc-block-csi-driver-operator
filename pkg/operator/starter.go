@@ -22,30 +22,25 @@ import (
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/assets"
-)
-
-const (
-	// Operand and operator run in the same namespace
-	defaultNamespace = "openshift-cluster-csi-drivers"
-	operatorName     = "ibm-vpc-block-csi-driver-operator"
-	operandName      = "ibm-vpc-block-csi-driver"
-	instanceName     = "vpc.block.csi.ibm.io"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/csidriver"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
 	// Create core clientset and informers
-	kubeClient := kubeclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, operatorName))
-	kubeInformersForNamespaces := v1helpers.NewKubeInformersForNamespaces(kubeClient, defaultNamespace, "")
-	secretInformer := kubeInformersForNamespaces.InformersFor(defaultNamespace).Core().V1().Secrets()
+	kubeClient := kubeclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
+	kubeInformersForNamespaces := v1helpers.NewKubeInformersForNamespaces(kubeClient, util.OperatorNamespace, "", util.ConfigMapNamespace)
+	secretInformer := kubeInformersForNamespaces.InformersFor(util.OperatorNamespace).Core().V1().Secrets()
 	nodeInformer := kubeInformersForNamespaces.InformersFor("").Core().V1().Nodes()
 
 	// Create config clientset and informer. This is used to get the cluster ID
-	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, operatorName))
+	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
 	configInformers := configinformers.NewSharedInformerFactory(configClient, 20*time.Minute)
 
 	// Create GenericOperatorclient. This is used by the library-go controllers created down below
 	gvr := opv1.GroupVersion.WithResource("clustercsidrivers")
-	operatorClient, dynamicInformers, err := goc.NewClusterScopedOperatorClientWithConfigName(controllerConfig.KubeConfig, gvr, instanceName)
+	operatorClient, dynamicInformers, err := goc.NewClusterScopedOperatorClientWithConfigName(controllerConfig.KubeConfig, gvr, util.InstanceName)
 	if err != nil {
 		return err
 	}
@@ -59,7 +54,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		operatorClient,
 		controllerConfig.EventRecorder,
 	).WithLogLevelController().WithManagementStateController(
-		operandName,
+		util.OperandName,
 		false,
 	).WithStaticResourcesController(
 		"IBMBlockDriverStaticResourcesController",
@@ -90,7 +85,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		assets.ReadFile,
 		"controller.yaml",
 		kubeClient,
-		kubeInformersForNamespaces.InformersFor(defaultNamespace),
+		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
 		configInformers,
 		[]factory.Informer{
 			nodeInformer.Informer(),
@@ -102,7 +97,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		assets.ReadFile,
 		"node.yaml",
 		kubeClient,
-		kubeInformersForNamespaces.InformersFor(defaultNamespace),
+		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
 		nil,
 		csidrivernodeservicecontroller.WithObservedProxyDaemonSetHook(),
 	)
@@ -111,13 +106,31 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		return err
 	}
 
+	secretSyncController := secret.NewSecretSyncController(
+		operatorClient,
+		kubeClient,
+		kubeInformersForNamespaces,
+		util.Resync,
+		controllerConfig.EventRecorder)
+	vpcBlockCSIController := csidriver.NewVPCBlockController(
+		operatorClient,
+		kubeClient,
+		kubeInformersForNamespaces,
+		[]csidriver.Runnable{
+			csiControllerSet,
+			secretSyncController,
+		},
+		controllerConfig.EventRecorder,
+	)
+
 	klog.Info("Starting the informers")
 	go kubeInformersForNamespaces.Start(ctx.Done())
 	go dynamicInformers.Start(ctx.Done())
 	go configInformers.Start(ctx.Done())
 
 	klog.Info("Starting controllerset")
-	go csiControllerSet.Run(ctx, 1)
+	go vpcBlockCSIController.Run(ctx, 1)
+	//go csiControllerSet.Run(ctx, 1)
 
 	<-ctx.Done()
 

@@ -16,9 +16,6 @@ spec:
       labels:
         app: ibm-vpc-block-csi-driver
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000160009
       containers:
         - args:
             - --v=5

@@ -251,7 +251,14 @@ rules:
   - config.openshift.io
   resources:
   - infrastructures
+  - proxies
   verbs:
   - get
   - list
   - watch
+- apiGroups:
+    - ''
+  resources:
+    - configmaps
+  verbs:
+    - '*'
