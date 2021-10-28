@@ -141,9 +141,9 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 
 	// Creating secret data storage-secret-store
 	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
-	tomlDataEncoded := b64.StdEncoding.EncodeToString([]byte(tomlData))
+	//tomlDataEncoded := b64.StdEncoding.EncodeToString([]byte(tomlData))
 	data := make(map[string][]byte)
-	data[StorageSecretStoreKey] = []byte(tomlDataEncoded)
+	data[StorageSecretStoreKey] = []byte(tomlData)
 	secret := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      util.IBMCSIDriverSecretName,
