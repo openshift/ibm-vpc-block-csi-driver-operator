@@ -2,10 +2,10 @@ package secret
 
 import (
 	"context"
-	b64 "encoding/base64"
 	"fmt"
+	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	operatorv1 "github.com/openshift/api/operator/v1"
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"github.com/openshift/library-go/pkg/operator/events"
 	"github.com/openshift/library-go/pkg/operator/resource/resourceapply"
@@ -17,7 +17,10 @@ import (
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 	"regexp"
+	"strings"
 	"time"
+
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
 
 // This SecretSyncController translates Secret provided by cloud-credential-operator into
@@ -110,7 +113,6 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 	if err != nil {
 		return err
 	}
-
 	_, _, err = resourceapply.ApplySecret(c.kubeClient.CoreV1(), c.eventRecorder, driverSecret)
 	if err != nil {
 		klog.V(2).Infof("Error while creating the secret %s", err)
@@ -135,13 +137,24 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	if len(match) <= 0 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
 	}
-	region := match[0]
+	region := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "region = ", "")
 
-	resourceId := "test-id" // TODO add resource id
+	re = regexp.MustCompile("resourceGroupName = (.*?)\n")
+	match = re.FindStringSubmatch(conf)
+	//if len(match) <= 0 {
+	//	return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain resourcegroupname", util.ConfigMapName)
+	//}
+	//resourceGroupName := match[0]
+
+	resourceGroupName := "ipi-dev-long-test-1-h59rl"
+
+	resourceId, err := getResourceID(resourceGroupName, string(apiKey))
+	if err != nil {
+		return nil, err
+	}
 
 	// Creating secret data storage-secret-store
 	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
-	//tomlDataEncoded := b64.StdEncoding.EncodeToString([]byte(tomlData))
 	data := make(map[string][]byte)
 	data[StorageSecretStoreKey] = []byte(tomlData)
 	secret := v1.Secret{
@@ -154,4 +167,31 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 
 	return &secret, nil
+}
+
+
+func getResourceID(resourceName, apiKey string) (string, error){
+	serviceClientOptions := &resourcemanagerv2.ResourceManagerV2Options{
+		URL:           "https://resource-controller.cloud.ibm.com",
+		Authenticator: &core.IamAuthenticator{ApiKey: apiKey},
+	}
+	serviceClient, err := resourcemanagerv2.NewResourceManagerV2UsingExternalConfig(serviceClientOptions)
+	if err != nil {
+		return "", err
+	}
+	listResourceGroupsOptions := serviceClient.NewListResourceGroupsOptions()
+	resourceGroupList, _, err := serviceClient.ListResourceGroups(listResourceGroupsOptions)
+
+	if err != nil{
+		return "", err
+	}
+	if len(resourceGroupList.Resources) > 0 {
+		for _, v := range resourceGroupList.Resources {
+			if *v.Name == resourceName {
+				resourceID := *v.ID
+				return resourceID, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("Resource %s not found for given g2Credentials", resourceName)
 }

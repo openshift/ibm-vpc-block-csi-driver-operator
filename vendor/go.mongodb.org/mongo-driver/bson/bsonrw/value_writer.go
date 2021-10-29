@@ -47,9 +47,11 @@ func NewBSONValueWriterPool() *BSONValueWriterPool {
 // Get retrieves a BSON ValueWriter from the pool and resets it to use w as the destination.
 func (bvwp *BSONValueWriterPool) Get(w io.Writer) ValueWriter {
 	vw := bvwp.pool.Get().(*valueWriter)
-
-	// TODO: Having to call reset here with the same buffer doesn't really make sense.
-	vw.reset(vw.buf)
+	if writer, ok := w.(*SliceWriter); ok {
+		vw.reset(*writer)
+		vw.w = writer
+		return vw
+	}
 	vw.buf = vw.buf[:0]
 	vw.w = w
 	return vw
@@ -69,6 +71,11 @@ func (bvwp *BSONValueWriterPool) Put(vw ValueWriter) (ok bool) {
 	if !ok {
 		return false
 	}
+
+	if _, ok := bvw.w.(*SliceWriter); ok {
+		bvw.buf = nil
+	}
+	bvw.w = nil
 
 	bvwp.pool.Put(bvw)
 	return true
@@ -542,6 +549,10 @@ func (vw *valueWriter) Flush() error {
 		return nil
 	}
 
+	if sw, ok := vw.w.(*SliceWriter); ok {
+		*sw = vw.buf
+		return nil
+	}
 	if _, err := vw.w.Write(vw.buf); err != nil {
 		return err
 	}

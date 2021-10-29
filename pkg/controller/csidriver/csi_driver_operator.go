@@ -61,7 +61,6 @@ func (c *VPCBlockController) sync(ctx context.Context, syncCtx factory.SyncConte
 	if opSpec.ManagementState != operatorv1.Managed {
 		return nil
 	}
-
 	klog.V(4).Infof("Starting CSI driver controllers")
 	for _, ctrl := range c.csiControllers {
 		if ctrl == nil {
