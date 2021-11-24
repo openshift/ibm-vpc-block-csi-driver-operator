@@ -139,16 +139,21 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 	region := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "region = ", "")
 
-	re = regexp.MustCompile("resourceGroupName = (.*?)\n")
+	re = regexp.MustCompile("g2ResourceGroupName = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
-	//if len(match) <= 0 {
-	//	return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain resourcegroupname", util.ConfigMapName)
-	//}
-	//resourceGroupName := match[0]
+	if len(match) <= 0 {
+		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain resourcegroupname", util.ConfigMapName)
+	}
+	resourceGroupName := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "g2ResourceGroupName = ", "")
 
-	resourceGroupName := "ipi-dev-long-test-1-h59rl"
+	re = regexp.MustCompile("accountID = (.*?)\n")
+	match = re.FindStringSubmatch(conf)
+	if len(match) <= 0 {
+		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain accountID", util.ConfigMapName)
+	}
+	accountID := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "accountID = ", "")
 
-	resourceId, err := getResourceID(resourceGroupName, string(apiKey))
+	resourceId, err := getResourceID(resourceGroupName, accountID, string(apiKey))
 	if err != nil {
 		return nil, err
 	}
@@ -169,8 +174,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	return &secret, nil
 }
 
-
-func getResourceID(resourceName, apiKey string) (string, error){
+func getResourceID(resourceName, accountID, apiKey string) (string, error) {
 	serviceClientOptions := &resourcemanagerv2.ResourceManagerV2Options{
 		URL:           "https://resource-controller.cloud.ibm.com",
 		Authenticator: &core.IamAuthenticator{ApiKey: apiKey},
@@ -180,9 +184,10 @@ func getResourceID(resourceName, apiKey string) (string, error){
 		return "", err
 	}
 	listResourceGroupsOptions := serviceClient.NewListResourceGroupsOptions()
+	listResourceGroupsOptions.SetAccountID(accountID)
 	resourceGroupList, _, err := serviceClient.ListResourceGroups(listResourceGroupsOptions)
 
-	if err != nil{
+	if err != nil {
 		return "", err
 	}
 	if len(resourceGroupList.Resources) > 0 {

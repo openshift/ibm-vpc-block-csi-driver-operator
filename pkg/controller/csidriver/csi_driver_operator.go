@@ -2,8 +2,8 @@ package csidriver
 
 import (
 	"context"
-	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
+	operatorv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"github.com/openshift/library-go/pkg/operator/events"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
@@ -18,10 +18,9 @@ import (
 // openshift-cloud-controller-manager namespace. It creates a secret
 // storage-secret-store after getting necessary values from the above resources.
 
-
 type VPCBlockController struct {
-	operatorClient v1helpers.OperatorClient
-	kubeClient     kubernetes.Interface
+	operatorClient     v1helpers.OperatorClient
+	kubeClient         kubernetes.Interface
 	storageClassLister storagelisters.StorageClassLister
 	csiControllers     []Runnable
 	controllersRunning bool
@@ -74,4 +73,3 @@ func (c *VPCBlockController) sync(ctx context.Context, syncCtx factory.SyncConte
 
 	return nil
 }
-
