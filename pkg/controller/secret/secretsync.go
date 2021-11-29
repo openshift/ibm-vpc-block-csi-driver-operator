@@ -82,9 +82,11 @@ func NewSecretSyncController(
 func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncContext) error {
 	opSpec, _, _, err := c.operatorClient.GetOperatorState()
 	if err != nil {
+		klog.V(2).Infof("Error while getting operator state %s", err)
 		return err
 	}
 	if opSpec.ManagementState != operatorv1.Managed {
+		klog.V(2).Infof("Operator management state is not managed")
 		return nil
 	}
 
@@ -95,6 +97,7 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 			klog.V(2).Infof("Waiting for secret %s from %s", util.CloudCredentialSecretName, util.OperatorNamespace)
 			return nil
 		}
+		klog.V(2).Infof("Secret listener failed to get secret details %s", err)
 		return err
 	}
 
@@ -105,12 +108,14 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 			klog.V(2).Infof("Waiting for configmap %s from %s", util.CloudCredentialSecretName, util.ConfigMapNamespace)
 			return nil
 		}
+		klog.V(2).Infof("Configmap listener failed to get cm details %s", err)
 		return err
 	}
 
 	// Get the storage-secret-store secret to be created from ibm-cloud-credential secret and clod-conf configmap
 	driverSecret, err := c.translateSecret(cloudSecret, cloudConfConfigMap)
 	if err != nil {
+		klog.V(2).Infof("Error while extracting data from secret/cm %s", err)
 		return err
 	}
 	_, _, err = resourceapply.ApplySecret(c.kubeClient.CoreV1(), c.eventRecorder, driverSecret)
@@ -118,6 +123,7 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 		klog.V(2).Infof("Error while creating the secret %s", err)
 		return err
 	}
+	klog.V(2).Infof("%s secret created successfully", util.IBMCSIDriverSecretName)
 	return nil
 }
 

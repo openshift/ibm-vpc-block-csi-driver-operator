@@ -117,8 +117,8 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeClient,
 		kubeInformersForNamespaces,
 		[]csidriver.Runnable{
-			csiControllerSet,
 			secretSyncController,
+			csiControllerSet,
 		},
 		controllerConfig.EventRecorder,
 	)

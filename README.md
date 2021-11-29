@@ -9,8 +9,9 @@ This operator is installed by the [cluster-storage-operator](https://github.com/
 Before running the operator manually, you must remove the operator installed by CVO
 
 ```shell
-# Scale down CVO
-oc scale -n openshift-cluster-version  deployment/cluster-version-operator --replicas=0
+# Scale down CVO and CSO
+oc scale --replicas=0 deploy/cluster-version-operator -n openshift-cluster-version
+oc scale --replicas=0 deploy/cluster-storage-operator -n openshift-cluster-storage-operator
 
 # Delete operator resources (daemonset, deployments)
 oc -n openshift-cluster-csi-drivers delete deployment.apps/ibm-vpc-block-csi-driver-operator deployment.apps/ibm-vpc-block-csi-controller daemonset.apps/ibm-vpc-block-csi-node
@@ -20,33 +21,18 @@ To build and run the operator locally:
 
 ```shell
 # Create only the resources the operator needs to run via CLI
-oc apply -f manifests/00_crd.yaml
-oc apply -f manifests/01_namespace.yaml
 oc apply -f manifests/09_cr.yaml
 
 # Build the operator
-make all
+make 
 
 # Set the environment variables
-export DRIVER_IMAGE=icr.io/ibm/ibm-vpc-block-csi-driver:v3.0.0
-export PROVISIONER_IMAGE=quay.io/k8scsi/csi-provisioner:v1.6.0
-export ATTACHER_IMAGE=quay.io/k8scsi/csi-attacher:v2.2.0
-export NODE_DRIVER_REGISTRAR_IMAGE=quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
-export LIVENESS_PROBE_IMAGE=quay.io/k8scsi/livenessprobe:v2.0.0
+export DRIVER_IMAGE=gcr.io/k8s-staging-cloud-provider-ibm/ibm-vpc-block-csi-driver:master
+export PROVISIONER_IMAGE=k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
+export ATTACHER_IMAGE=k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
+export NODE_DRIVER_REGISTRAR_IMAGE=k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
+export LIVENESS_PROBE_IMAGE=k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
 
 # Run the operator via CLI
 ./ibm-vpc-block-csi-driver-operator start --kubeconfig $MY_KUBECONFIG --namespace openshift-cluster-csi-drivers
-```
-
-To run the latest build of the operator:
-```shell
-# Set the environment variables
-export DRIVER_IMAGE=icr.io/ibm/ibm-vpc-block-csi-driver:v3.0.0
-export PROVISIONER_IMAGE=quay.io/k8scsi/csi-provisioner:v1.6.0
-export ATTACHER_IMAGE=quay.io/k8scsi/csi-attacher:v2.2.0
-export NODE_DRIVER_REGISTRAR_IMAGE=quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
-export LIVENESS_PROBE_IMAGE=quay.io/k8scsi/livenessprobe:v2.0.0
-
-# Deploy the operator and everything it needs
-oc apply -f manifests/
 ```

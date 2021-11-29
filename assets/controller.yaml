@@ -125,9 +125,6 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
-            - mountPath: /etc/storage_ibmc/cluster_info
-              name: cluster-info
-              readOnly: true
       serviceAccountName: ibm-vpc-block-controller-sa
       volumes:
         - emptyDir: {}
@@ -135,6 +132,3 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-        - configMap:
-            name: cluster-info
-          name: cluster-info

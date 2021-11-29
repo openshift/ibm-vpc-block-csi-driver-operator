@@ -262,3 +262,11 @@ rules:
     - configmaps
   verbs:
     - '*'
+- apiGroups:
+    - csi.storage.k8s.io
+  resources:
+    - csinodeinfos
+  verbs:
+    - get
+    - list
+    - watch

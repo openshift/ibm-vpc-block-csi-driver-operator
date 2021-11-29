@@ -111,9 +111,6 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
-            - mountPath: /etc/storage_ibmc/cluster_info
-              name: cluster-info
-              readOnly: true
         - args:
             - --csi-address=/csi/csi.sock
           image: ${LIVENESS_PROBE_IMAGE}
@@ -171,6 +168,3 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-        - configMap:
-            name: cluster-info
-          name: cluster-info
