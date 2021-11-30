@@ -17,6 +17,15 @@ oc scale --replicas=0 deploy/cluster-storage-operator -n openshift-cluster-stora
 oc -n openshift-cluster-csi-drivers delete deployment.apps/ibm-vpc-block-csi-driver-operator deployment.apps/ibm-vpc-block-csi-controller daemonset.apps/ibm-vpc-block-csi-node
 ```
 
+Follow below steps to add node labels
+```shell
+# Get worker id 
+curl -X GET "https://<region>.iaas.cloud.ibm.com/v1/instances?version=2021-11-23&generation=2&name=<node-name>" -H "Authorization: $iam_token"
+# Add node labels 
+kubectl label nodes <node-name>  "ibm-cloud.kubernetes.io/worker-id"=<worker-id>
+
+```
+
 To build and run the operator locally:
 
 ```shell
