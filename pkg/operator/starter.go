@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/assets"
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/csidriver"
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
@@ -112,16 +111,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeInformersForNamespaces,
 		util.Resync,
 		controllerConfig.EventRecorder)
-	vpcBlockCSIController := csidriver.NewVPCBlockController(
-		operatorClient,
-		kubeClient,
-		kubeInformersForNamespaces,
-		[]csidriver.Runnable{
-			secretSyncController,
-			csiControllerSet,
-		},
-		controllerConfig.EventRecorder,
-	)
 
 	klog.Info("Starting the informers")
 	go kubeInformersForNamespaces.Start(ctx.Done())
@@ -129,8 +118,8 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	go configInformers.Start(ctx.Done())
 
 	klog.Info("Starting controllerset")
-	go vpcBlockCSIController.Run(ctx, 1)
-	//go csiControllerSet.Run(ctx, 1)
+	go secretSyncController.Run(ctx, 1)
+	go csiControllerSet.Run(ctx, 1)
 
 	<-ctx.Done()
 

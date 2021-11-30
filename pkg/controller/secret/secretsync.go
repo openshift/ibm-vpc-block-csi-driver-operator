@@ -17,7 +17,6 @@ import (
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
@@ -46,7 +45,7 @@ const (
 iam_client_id = "bx"
 iam_client_secret = "bx"
 
-g2_token_exchange_endpoint_url = "https://iam.bluemix.net"
+g2_token_exchange_endpoint_url = "https://iam.cloud.ibm.com"
 g2_riaas_endpoint_url = "https://%s.iaas.cloud.ibm.com"
 
 g2_resource_group_id = "%s" 
@@ -143,21 +142,21 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	if len(match) <= 0 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
 	}
-	region := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "region = ", "")
+	region := match[1]
 
 	re = regexp.MustCompile("g2ResourceGroupName = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
 	if len(match) <= 0 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain resourcegroupname", util.ConfigMapName)
 	}
-	resourceGroupName := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "g2ResourceGroupName = ", "")
+	resourceGroupName := match[1]
 
 	re = regexp.MustCompile("accountID = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
 	if len(match) <= 0 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain accountID", util.ConfigMapName)
 	}
-	accountID := strings.ReplaceAll(strings.TrimSuffix(match[0], "\n"), "accountID = ", "")
+	accountID := match[1]
 
 	resourceId, err := getResourceID(resourceGroupName, accountID, string(apiKey))
 	if err != nil {
