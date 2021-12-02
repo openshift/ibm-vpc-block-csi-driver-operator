@@ -46,8 +46,7 @@ iam_client_id = "bx"
 iam_client_secret = "bx"
 
 g2_token_exchange_endpoint_url = "https://iam.cloud.ibm.com"
-g2_riaas_endpoint_url = "https://%s.iaas.cloud.ibm.com"
-
+	
 g2_resource_group_id = "%s" 
 g2_api_key = "%s"
 provider_type = "g2"
@@ -81,11 +80,11 @@ func NewSecretSyncController(
 func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncContext) error {
 	opSpec, _, _, err := c.operatorClient.GetOperatorState()
 	if err != nil {
-		klog.V(2).Infof("Error while getting operator state %s", err)
+		klog.V(2).ErrorS(err, "Error while getting operator state")
 		return err
 	}
 	if opSpec.ManagementState != operatorv1.Managed {
-		klog.V(2).Infof("Operator management state is not managed")
+		klog.V(2).Info("Operator management state is not managed")
 		return nil
 	}
 
@@ -96,7 +95,7 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 			klog.V(2).Infof("Waiting for secret %s from %s", util.CloudCredentialSecretName, util.OperatorNamespace)
 			return nil
 		}
-		klog.V(2).Infof("Secret listener failed to get secret details %s", err)
+		klog.V(2).ErrorS(err, "Secret listener failed to get secret details")
 		return err
 	}
 
@@ -107,19 +106,19 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 			klog.V(2).Infof("Waiting for configmap %s from %s", util.CloudCredentialSecretName, util.ConfigMapNamespace)
 			return nil
 		}
-		klog.V(2).Infof("Configmap listener failed to get cm details %s", err)
+		klog.V(2).ErrorS(err, "Configmap listener failed to get cm details")
 		return err
 	}
 
 	// Get the storage-secret-store secret to be created from ibm-cloud-credential secret and clod-conf configmap
 	driverSecret, err := c.translateSecret(cloudSecret, cloudConfConfigMap)
 	if err != nil {
-		klog.V(2).Infof("Error while extracting data from secret/cm %s", err)
+		klog.V(2).ErrorS(err, "Error while extracting data from secret/cm")
 		return err
 	}
 	_, _, err = resourceapply.ApplySecret(c.kubeClient.CoreV1(), c.eventRecorder, driverSecret)
 	if err != nil {
-		klog.V(2).Infof("Error while creating the secret %s", err)
+		klog.V(2).ErrorS(err, "Error while creating the secret")
 		return err
 	}
 	klog.V(2).Infof("%s secret created successfully", util.IBMCSIDriverSecretName)
@@ -136,24 +135,26 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain key %s", util.ConfigMapName, cloudSecretKey)
 	}
 
-	// Extracting the region from configmap
-	re := regexp.MustCompile("region = (.*?)\n")
-	match := re.FindStringSubmatch(conf)
-	if len(match) <= 0 {
-		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
-	}
-	region := match[1]
+	var re *regexp.Regexp
+	var match []string
+	//// Extracting the region from configmap
+	//re = regexp.MustCompile("region = (.*?)\n")
+	//match = re.FindStringSubmatch(conf)
+	//if len(match) <= 1 {
+	//	return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
+	//}
+	//region := match[1]
 
 	re = regexp.MustCompile("g2ResourceGroupName = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
-	if len(match) <= 0 {
+	if len(match) <= 1 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain resourcegroupname", util.ConfigMapName)
 	}
 	resourceGroupName := match[1]
 
 	re = regexp.MustCompile("accountID = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
-	if len(match) <= 0 {
+	if len(match) <= 1 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain accountID", util.ConfigMapName)
 	}
 	accountID := match[1]
@@ -164,7 +165,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 
 	// Creating secret data storage-secret-store
-	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
+	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, resourceId, apiKey)
 	data := make(map[string][]byte)
 	data[StorageSecretStoreKey] = []byte(tomlData)
 	secret := v1.Secret{
