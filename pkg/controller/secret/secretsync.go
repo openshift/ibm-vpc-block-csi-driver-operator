@@ -137,13 +137,6 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 
 	var re *regexp.Regexp
 	var match []string
-	//// Extracting the region from configmap
-	//re = regexp.MustCompile("region = (.*?)\n")
-	//match = re.FindStringSubmatch(conf)
-	//if len(match) <= 1 {
-	//	return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
-	//}
-	//region := match[1]
 
 	re = regexp.MustCompile("g2ResourceGroupName = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
