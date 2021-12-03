@@ -139,7 +139,7 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 	}
 }
 
-func TestSecretSyncController_translateSecret1(t *testing.T) {
+func TestSecretSyncController_translateSecret_success(t *testing.T) {
 	secretNamespace := "test-ns-operator"
 	secretName := "ibm-cloud-credential"
 	cmNamespace := "test-ns-cco"
