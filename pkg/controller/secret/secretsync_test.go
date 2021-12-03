@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestSecretSyncController_translateSecret(t *testing.T) {
+func TestTranslateSecretError(t *testing.T) {
 	secretNamespace := "test-ns-operator"
 	secretName := "ibm-cloud-credential"
 	cmNamespace := "test-ns-cco"
@@ -23,13 +23,9 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *k8v1.Secret
-		wantErr bool
 	}{
 		{
 			name: "Empty secret",
-			want: nil,
-			wantErr: true,
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
@@ -46,8 +42,6 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 			},
 		}, {
 			name: "Empty configmap",
-			want: nil,
-			wantErr: true,
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
@@ -65,8 +59,6 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 			},
 		}, {
 			name: "Empty ResourceGroupName",
-			want: nil,
-			wantErr: true,
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
@@ -85,8 +77,6 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 			},
 		}, {
 			name: "Empty accountID",
-			want: nil,
-			wantErr: true,
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
@@ -105,8 +95,6 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 			},
 		}, {
 			name: "Error getting resource ID",
-			want: nil,
-			wantErr: true,
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
@@ -128,18 +116,18 @@ func TestSecretSyncController_translateSecret(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := c.translateSecret(tt.args.cloudSecret, tt.args.cloudConf)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("translateSecret() error = %v, wantErr %v", err, tt.wantErr)
+			if err == nil {
+				t.Errorf("translateSecret() no error returned %v", err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("translateSecret() got = %v, want %v", got, tt.want)
+			if got != nil {
+				t.Errorf("translateSecret() got = %v is not nil", got)
 			}
 		})
 	}
 }
 
-func TestSecretSyncController_translateSecret_success(t *testing.T) {
+func TestTranslateSecretSuccess(t *testing.T) {
 	secretNamespace := "test-ns-operator"
 	secretName := "ibm-cloud-credential"
 	cmNamespace := "test-ns-cco"
