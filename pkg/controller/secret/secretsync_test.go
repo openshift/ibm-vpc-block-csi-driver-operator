@@ -58,7 +58,7 @@ func TestTranslateSecretError(t *testing.T) {
 				},
 			},
 		}, {
-			name: "Empty ResourceGroupName",
+			name: "Empty region",
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
@@ -73,6 +73,24 @@ func TestTranslateSecretError(t *testing.T) {
 						Namespace: cmNamespace,
 					},
 					Data: map[string]string{CloudConfigmapKey: "cm-data"},
+				},
+			},
+		}, {
+			name: "Empty ResourceGroupName",
+			args: args{
+				cloudSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:  		secretName,
+						Namespace: secretNamespace,
+					},
+					Data: map[string][]byte{cloudSecretKey: []byte("test")},
+				},
+				cloudConf:	&k8v1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      cmName,
+						Namespace: cmNamespace,
+					},
+					Data: map[string]string{CloudConfigmapKey: "region = region1\n"},
 				},
 			},
 		}, {
@@ -134,8 +152,9 @@ func TestTranslateSecretSuccess(t *testing.T) {
 	cmName := "cloud-conf"
 	resourceId := "fakeid"
 	apiKey := "testapikey"
+	region := "region1"
 
-	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, resourceId, apiKey)
+	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
 	data := make(map[string][]byte)
 	data[StorageSecretStoreKey] = []byte(tomlData)
 	want := &k8v1.Secret{

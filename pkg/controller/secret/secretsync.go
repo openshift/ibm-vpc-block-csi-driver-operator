@@ -44,9 +44,8 @@ const (
 	StorageSecretTomlTemplate = `[vpc]
 iam_client_id = "bx"
 iam_client_secret = "bx"
-
 g2_token_exchange_endpoint_url = "https://iam.cloud.ibm.com"
-	
+g2_riaas_endpoint_url = "https://%s.iaas.cloud.ibm.com"	
 g2_resource_group_id = "%s" 
 g2_api_key = "%s"
 provider_type = "g2"
@@ -138,6 +137,14 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	var re *regexp.Regexp
 	var match []string
 
+	// Extracting the region from configmap
+	re = regexp.MustCompile("region = (.*?)\n")
+	match = re.FindStringSubmatch(conf)
+	if len(match) <= 0 {
+		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
+	}
+	region := match[1]
+
 	re = regexp.MustCompile("g2ResourceGroupName = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
 	if len(match) <= 1 {
@@ -158,7 +165,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 
 	// Creating secret data storage-secret-store
-	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, resourceId, apiKey)
+	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
 	data := make(map[string][]byte)
 	data[StorageSecretStoreKey] = []byte(tomlData)
 	secret := v1.Secret{
