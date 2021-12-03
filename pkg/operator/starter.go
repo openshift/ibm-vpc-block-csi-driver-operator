@@ -10,6 +10,8 @@ import (
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"os"
+	"strings"
 
 	opv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
@@ -22,30 +24,37 @@ import (
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/assets"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
+	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
 
-const (
-	// Operand and operator run in the same namespace
-	defaultNamespace = "openshift-cluster-csi-drivers"
-	operatorName     = "ibm-vpc-block-csi-driver-operator"
-	operandName      = "ibm-vpc-block-csi-driver"
-	instanceName     = "vpc.block.csi.ibm.io"
-)
+func readFileAndReplace(name string) ([]byte, error) {
+	pairs := []string{
+		"${NODE_LABEL_IMAGE}", os.Getenv("NODE_LABEL_IMAGE"),
+	}
+	fileBytes, err := assets.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+	policyReplacer := strings.NewReplacer(pairs...)
+	transformedString := policyReplacer.Replace(string(fileBytes))
+	return []byte(transformedString), nil
+}
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
 	// Create core clientset and informers
-	kubeClient := kubeclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, operatorName))
-	kubeInformersForNamespaces := v1helpers.NewKubeInformersForNamespaces(kubeClient, defaultNamespace, "")
-	secretInformer := kubeInformersForNamespaces.InformersFor(defaultNamespace).Core().V1().Secrets()
+	kubeClient := kubeclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
+	kubeInformersForNamespaces := v1helpers.NewKubeInformersForNamespaces(kubeClient, util.OperatorNamespace, "", util.ConfigMapNamespace)
+	secretInformer := kubeInformersForNamespaces.InformersFor(util.OperatorNamespace).Core().V1().Secrets()
 	nodeInformer := kubeInformersForNamespaces.InformersFor("").Core().V1().Nodes()
 
 	// Create config clientset and informer. This is used to get the cluster ID
-	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, operatorName))
+	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
 	configInformers := configinformers.NewSharedInformerFactory(configClient, 20*time.Minute)
 
 	// Create GenericOperatorclient. This is used by the library-go controllers created down below
 	gvr := opv1.GroupVersion.WithResource("clustercsidrivers")
-	operatorClient, dynamicInformers, err := goc.NewClusterScopedOperatorClientWithConfigName(controllerConfig.KubeConfig, gvr, instanceName)
+	operatorClient, dynamicInformers, err := goc.NewClusterScopedOperatorClientWithConfigName(controllerConfig.KubeConfig, gvr, util.InstanceName)
 	if err != nil {
 		return err
 	}
@@ -59,7 +68,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		operatorClient,
 		controllerConfig.EventRecorder,
 	).WithLogLevelController().WithManagementStateController(
-		operandName,
+		util.OperandName,
 		false,
 	).WithStaticResourcesController(
 		"IBMBlockDriverStaticResourcesController",
@@ -78,6 +87,10 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/provisioner_role.yaml",
 			"rbac/registrar_binding.yaml",
 			"rbac/registrar_role.yaml",
+			"rbac/resizer_role.yaml",
+			"rbac/resizer_rolebinding.yaml",
+			"rbac/initcontainer_role.yaml",
+			"rbac/initcontainer_rolebinding.yaml",
 			"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-custom-StorageClass.yaml",
@@ -90,7 +103,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		assets.ReadFile,
 		"controller.yaml",
 		kubeClient,
-		kubeInformersForNamespaces.InformersFor(defaultNamespace),
+		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
 		configInformers,
 		[]factory.Informer{
 			nodeInformer.Informer(),
@@ -99,10 +112,10 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		csidrivercontrollerservicecontroller.WithObservedProxyDeploymentHook(),
 	).WithCSIDriverNodeService(
 		"IBMBlockDriverNodeServiceController",
-		assets.ReadFile,
+		readFileAndReplace,
 		"node.yaml",
 		kubeClient,
-		kubeInformersForNamespaces.InformersFor(defaultNamespace),
+		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
 		nil,
 		csidrivernodeservicecontroller.WithObservedProxyDaemonSetHook(),
 	)
@@ -111,12 +124,20 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		return err
 	}
 
+	secretSyncController := secret.NewSecretSyncController(
+		operatorClient,
+		kubeClient,
+		kubeInformersForNamespaces,
+		util.Resync,
+		controllerConfig.EventRecorder)
+
 	klog.Info("Starting the informers")
 	go kubeInformersForNamespaces.Start(ctx.Done())
 	go dynamicInformers.Start(ctx.Done())
 	go configInformers.Start(ctx.Done())
 
 	klog.Info("Starting controllerset")
+	go secretSyncController.Run(ctx, 1)
 	go csiControllerSet.Run(ctx, 1)
 
 	<-ctx.Done()

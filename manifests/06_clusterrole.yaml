@@ -251,7 +251,22 @@ rules:
   - config.openshift.io
   resources:
   - infrastructures
+  - proxies
   verbs:
   - get
   - list
   - watch
+- apiGroups:
+    - ''
+  resources:
+    - configmaps
+  verbs:
+    - '*'
+- apiGroups:
+    - csi.storage.k8s.io
+  resources:
+    - csinodeinfos
+  verbs:
+    - get
+    - list
+    - watch

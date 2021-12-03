@@ -15,6 +15,30 @@ spec:
       labels:
         app: ibm-vpc-block-csi-driver
     spec:
+      initContainers:
+        - name: vpc-node-label-updater
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              cpu: 12m
+              memory: 24Mi
+            requests:
+              cpu: 3m
+              memory: 6Mi
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: SECRET_CONFIG_PATH
+              value: /etc/storage_ibmc
+          image: ${NODE_LABEL_IMAGE}
+          volumeMounts:
+            - mountPath: /etc/storage_ibmc
+              name: customer-auth
       containers:
         - args:
             - --v=5
@@ -111,9 +135,6 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
-            - mountPath: /etc/storage_ibmc/cluster_info
-              name: cluster-info
-              readOnly: true
         - args:
             - --csi-address=/csi/csi.sock
           image: ${LIVENESS_PROBE_IMAGE}
@@ -171,6 +192,3 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-        - configMap:
-            name: cluster-info
-          name: cluster-info
