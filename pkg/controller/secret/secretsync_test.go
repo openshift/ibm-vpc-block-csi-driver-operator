@@ -1,21 +1,27 @@
 package secret
 
 import (
-	"bou.ke/monkey"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 	k8v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"testing"
 )
+
+func fakeGetResourceID(resourceName, accountID, apiKey string) (string, error) {
+	return "fakeid", nil
+}
 
 func TestTranslateSecretError(t *testing.T) {
 	secretNamespace := "test-ns-operator"
 	secretName := "ibm-cloud-credential"
 	cmNamespace := "test-ns-cco"
 	cmName := "cloud-conf"
-	c := &SecretSyncController{}
+	c := &SecretSyncController{
+		getResourceID: defaultGetResourceID,
+	}
 	type args struct {
 		cloudSecret *k8v1.Secret
 		cloudConf   *k8v1.ConfigMap
@@ -166,7 +172,9 @@ func TestTranslateSecretSuccess(t *testing.T) {
 		Data: data,
 	}
 
-	c := &SecretSyncController{}
+	c := &SecretSyncController{
+		getResourceID: fakeGetResourceID,
+	}
 	cloudSecret := &k8v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
@@ -181,13 +189,10 @@ func TestTranslateSecretSuccess(t *testing.T) {
 		},
 		Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\n"},
 	}
-	monkey.Patch(getResourceID, func(resourceName, accountID, apiKey string) (string, error) {
-		return resourceId, nil
-	})
 	got, err := c.translateSecret(cloudSecret, cloudConf)
-
-	if !reflect.DeepEqual(got, want) {
+	if err != nil {
+		t.Errorf("translateSecret() error: %v", err)
+	} else if !reflect.DeepEqual(got, want) {
 		t.Errorf("translateSecret() got = %v, want %v", *got, *want)
-		t.Errorf("translateSecret() error = %v, wantErr %v", err, nil)
 	}
 }

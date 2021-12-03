@@ -3,6 +3,9 @@ package secret
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"time"
+
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	operatorv1 "github.com/openshift/api/operator/v1"
@@ -16,8 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
-	"regexp"
-	"time"
 
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
@@ -30,6 +31,7 @@ type SecretSyncController struct {
 	secretLister    corelisters.SecretLister
 	configMapLister corelisters.ConfigMapLister
 	eventRecorder   events.Recorder
+	getResourceID   func(resourceName, accountID, apiKey string) (string, error)
 }
 
 const (
@@ -68,6 +70,7 @@ func NewSecretSyncController(
 		secretLister:    secretInformer.Core().V1().Secrets().Lister(),
 		configMapLister: configMapInformer.Core().V1().ConfigMaps().Lister(),
 		eventRecorder:   eventRecorder.WithComponentSuffix("SecretSync"),
+		getResourceID:   defaultGetResourceID,
 	}
 	return factory.New().WithSync(c.sync).ResyncEvery(resync).WithSyncDegradedOnError(operatorClient).WithInformers(
 		operatorClient.Informer(),
@@ -159,7 +162,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 	accountID := match[1]
 
-	resourceId, err := getResourceID(resourceGroupName, accountID, string(apiKey))
+	resourceId, err := c.getResourceID(resourceGroupName, accountID, string(apiKey))
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +183,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	return &secret, nil
 }
 
-func getResourceID(resourceName, accountID, apiKey string) (string, error) {
+func defaultGetResourceID(resourceName, accountID, apiKey string) (string, error) {
 	serviceClientOptions := &resourcemanagerv2.ResourceManagerV2Options{
 		URL:           "https://resource-controller.cloud.ibm.com",
 		Authenticator: &core.IamAuthenticator{ApiKey: apiKey},

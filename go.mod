@@ -3,7 +3,6 @@ module github.com/IBM/ibm-vpc-block-csi-driver-operator
 go 1.16
 
 require (
-	bou.ke/monkey v1.0.2
 	github.com/IBM/go-sdk-core/v5 v5.7.2
 	github.com/IBM/platform-services-go-sdk v0.22.2
 	github.com/openshift/api v0.0.0-20210521075222-e273a339932a
