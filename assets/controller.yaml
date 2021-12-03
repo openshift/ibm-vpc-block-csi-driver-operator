@@ -19,6 +19,26 @@ spec:
       containers:
         - args:
             - --v=5
+            - --csi-address=/csi/csi.sock
+            - --timeout=900s
+          name: csi-resizer
+          image: ${RESIZER_IMAGE}
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              cpu: 80m
+              memory: 160Mi
+            requests:
+              cpu: 20m
+              memory: 40Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
+        - args:
+            - --v=5
             - --csi-address=$(ADDRESS)
             - --timeout=600s
             - --feature-gates=Topology=true

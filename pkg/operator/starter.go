@@ -10,6 +10,8 @@ import (
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"os"
+	"strings"
 
 	opv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
@@ -25,6 +27,19 @@ import (
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
 	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
+
+func readFileAndReplace(name string) ([]byte, error) {
+	pairs := []string{
+		"${NODE_LABEL_IMAGE}", os.Getenv("NODE_LABEL_IMAGE"),
+	}
+	fileBytes, err := assets.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+	policyReplacer := strings.NewReplacer(pairs...)
+	transformedString := policyReplacer.Replace(string(fileBytes))
+	return []byte(transformedString), nil
+}
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
 	// Create core clientset and informers
@@ -72,6 +87,10 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/provisioner_role.yaml",
 			"rbac/registrar_binding.yaml",
 			"rbac/registrar_role.yaml",
+			"rbac/resizer_role.yaml",
+			"rbac/resizer_rolebinding.yaml",
+			"rbac/initcontainer_role.yaml",
+			"rbac/initcontainer_rolebinding.yaml",
 			"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-custom-StorageClass.yaml",
@@ -93,7 +112,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		csidrivercontrollerservicecontroller.WithObservedProxyDeploymentHook(),
 	).WithCSIDriverNodeService(
 		"IBMBlockDriverNodeServiceController",
-		assets.ReadFile,
+		readFileAndReplace,
 		"node.yaml",
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
