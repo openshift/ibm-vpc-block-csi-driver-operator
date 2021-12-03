@@ -6,9 +6,7 @@
    labels:
      app: ibm-vpc-block-csi-driver
      addonmanager.kubernetes.io/mode: Reconcile
-   annotations:
-     version: 2.0.3_354
  rules:
    - apiGroups: [""]
      resources: ["nodes"]
-     verbs: ["get", "list", "watch", "update"]
+     verbs: ["get", "list", "update"]

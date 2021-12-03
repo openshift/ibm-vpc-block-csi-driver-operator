@@ -6,8 +6,6 @@
    labels:
      app: ibm-vpc-block-csi-driver
      addonmanager.kubernetes.io/mode: Reconcile
-   annotations:
-      version: 2.0.3_354
  subjects:
    - kind: ServiceAccount
      name: ibm-vpc-block-controller-sa
