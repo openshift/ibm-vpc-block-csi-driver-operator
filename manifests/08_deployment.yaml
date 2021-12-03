@@ -28,6 +28,10 @@ spec:
           value: ${NODE_DRIVER_REGISTRAR_IMAGE}
         - name: LIVENESS_PROBE_IMAGE
           value: ${LIVENESS_PROBE_IMAGE}
+        - name: RESIZER_IMAGE
+          value: ${RESIZER_IMAGE}
+        - name: NODE_LABEL_IMAGE
+          value: ${NODE_LABEL_IMAGE}
         - name: POD_NAME
           valueFrom:
             fieldRef:
