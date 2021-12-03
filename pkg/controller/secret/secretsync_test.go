@@ -21,19 +21,19 @@ func TestTranslateSecretError(t *testing.T) {
 		cloudConf   *k8v1.ConfigMap
 	}
 	tests := []struct {
-		name    string
-		args    args
+		name string
+		args args
 	}{
 		{
 			name: "Empty secret",
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:  		secretName,
+						Name:      secretName,
 						Namespace: secretNamespace,
 					},
 				},
-				cloudConf:	&k8v1.ConfigMap{
+				cloudConf: &k8v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      cmName,
 						Namespace: cmNamespace,
@@ -45,12 +45,12 @@ func TestTranslateSecretError(t *testing.T) {
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:  		secretName,
+						Name:      secretName,
 						Namespace: secretNamespace,
 					},
 					Data: map[string][]byte{cloudSecretKey: []byte("test")},
 				},
-				cloudConf:	&k8v1.ConfigMap{
+				cloudConf: &k8v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      cmName,
 						Namespace: cmNamespace,
@@ -62,12 +62,12 @@ func TestTranslateSecretError(t *testing.T) {
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:  		secretName,
+						Name:      secretName,
 						Namespace: secretNamespace,
 					},
 					Data: map[string][]byte{cloudSecretKey: []byte("test")},
 				},
-				cloudConf:	&k8v1.ConfigMap{
+				cloudConf: &k8v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      cmName,
 						Namespace: cmNamespace,
@@ -80,12 +80,12 @@ func TestTranslateSecretError(t *testing.T) {
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:  		secretName,
+						Name:      secretName,
 						Namespace: secretNamespace,
 					},
 					Data: map[string][]byte{cloudSecretKey: []byte("test")},
 				},
-				cloudConf:	&k8v1.ConfigMap{
+				cloudConf: &k8v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      cmName,
 						Namespace: cmNamespace,
@@ -98,12 +98,12 @@ func TestTranslateSecretError(t *testing.T) {
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:  		secretName,
+						Name:      secretName,
 						Namespace: secretNamespace,
 					},
 					Data: map[string][]byte{cloudSecretKey: []byte("test")},
 				},
-				cloudConf:	&k8v1.ConfigMap{
+				cloudConf: &k8v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      cmName,
 						Namespace: cmNamespace,
@@ -116,12 +116,12 @@ func TestTranslateSecretError(t *testing.T) {
 			args: args{
 				cloudSecret: &k8v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:  		secretName,
+						Name:      secretName,
 						Namespace: secretNamespace,
 					},
 					Data: map[string][]byte{cloudSecretKey: []byte("test")},
 				},
-				cloudConf:	&k8v1.ConfigMap{
+				cloudConf: &k8v1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      cmName,
 						Namespace: cmNamespace,
@@ -169,18 +169,18 @@ func TestTranslateSecretSuccess(t *testing.T) {
 	c := &SecretSyncController{}
 	cloudSecret := &k8v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:  		secretName,
+			Name:      secretName,
 			Namespace: secretNamespace,
 		},
 		Data: map[string][]byte{cloudSecretKey: []byte(apiKey)},
 	}
 	cloudConf := &k8v1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      cmName,
-					Namespace: cmNamespace,
-				},
-				Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\n"},
-		}
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cmName,
+			Namespace: cmNamespace,
+		},
+		Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\n"},
+	}
 	monkey.Patch(getResourceID, func(resourceName, accountID, apiKey string) (string, error) {
 		return resourceId, nil
 	})
