@@ -1,8 +1,6 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  annotations:
-    version: 2.0.3_354
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
     app: ibm-vpc-block-csi-driver
