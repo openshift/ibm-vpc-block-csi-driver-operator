@@ -1,0 +1,16 @@
+---
+ kind: ClusterRoleBinding
+ apiVersion: rbac.authorization.k8s.io/v1
+ metadata:
+   name: vpc-block-external-resizer-binding
+   labels:
+     app: ibm-vpc-block-csi-driver
+     addonmanager.kubernetes.io/mode: Reconcile
+ subjects:
+   - kind: ServiceAccount
+     name: ibm-vpc-block-controller-sa
+     namespace: openshift-cluster-csi-drivers
+ roleRef:
+   kind: ClusterRole
+   name: vpc-block-external-resizer-role
+   apiGroup: rbac.authorization.k8s.io

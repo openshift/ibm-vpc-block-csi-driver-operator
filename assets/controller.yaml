@@ -16,10 +16,27 @@ spec:
       labels:
         app: ibm-vpc-block-csi-driver
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000160009
       containers:
+        - args:
+            - --v=5
+            - --csi-address=/csi/csi.sock
+            - --timeout=900s
+          name: csi-resizer
+          image: ${RESIZER_IMAGE}
+          imagePullPolicy: Always
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              cpu: 80m
+              memory: 160Mi
+            requests:
+              cpu: 20m
+              memory: 40Mi
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /csi
         - args:
             - --v=5
             - --csi-address=$(ADDRESS)
@@ -128,9 +145,6 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
-            - mountPath: /etc/storage_ibmc/cluster_info
-              name: cluster-info
-              readOnly: true
       serviceAccountName: ibm-vpc-block-controller-sa
       volumes:
         - emptyDir: {}
@@ -138,6 +152,3 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
-        - configMap:
-            name: cluster-info
-          name: cluster-info
