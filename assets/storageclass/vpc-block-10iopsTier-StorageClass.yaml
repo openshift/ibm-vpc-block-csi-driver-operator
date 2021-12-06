@@ -3,7 +3,6 @@ kind: StorageClass
 metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-    version: 2.0.3_354
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
     app: ibm-vpc-block-csi-driver
