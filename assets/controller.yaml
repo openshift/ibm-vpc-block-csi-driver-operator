@@ -83,6 +83,7 @@ spec:
               name: socket-dir
         - args:
             - --csi-address=/csi/csi.sock
+            - --v=${LOG_LEVEL}
           image: ${LIVENESS_PROBE_IMAGE}
           name: liveness-probe
           securityContext:
