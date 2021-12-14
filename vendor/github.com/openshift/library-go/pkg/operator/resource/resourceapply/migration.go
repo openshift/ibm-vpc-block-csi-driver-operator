@@ -15,12 +15,12 @@ import (
 )
 
 // ApplyStorageVersionMigration merges objectmeta and required data.
-func ApplyStorageVersionMigration(client migrationclientv1alpha1.Interface, recorder events.Recorder, required *migrationv1alpha1.StorageVersionMigration) (*migrationv1alpha1.StorageVersionMigration, bool, error) {
+func ApplyStorageVersionMigration(ctx context.Context, client migrationclientv1alpha1.Interface, recorder events.Recorder, required *migrationv1alpha1.StorageVersionMigration) (*migrationv1alpha1.StorageVersionMigration, bool, error) {
 	clientInterface := client.MigrationV1alpha1().StorageVersionMigrations()
-	existing, err := clientInterface.Get(context.Background(), required.Name, metav1.GetOptions{})
+	existing, err := clientInterface.Get(ctx, required.Name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		requiredCopy := required.DeepCopy()
-		actual, err := clientInterface.Create(context.Background(), resourcemerge.WithCleanLabelsAndAnnotations(requiredCopy).(*v1alpha1.StorageVersionMigration), metav1.CreateOptions{})
+		actual, err := clientInterface.Create(ctx, resourcemerge.WithCleanLabelsAndAnnotations(requiredCopy).(*v1alpha1.StorageVersionMigration), metav1.CreateOptions{})
 		reportCreateEvent(recorder, requiredCopy, err)
 		return actual, true, err
 	}
@@ -40,7 +40,20 @@ func ApplyStorageVersionMigration(client migrationclientv1alpha1.Interface, reco
 	}
 
 	required.Spec.Resource.DeepCopyInto(&existingCopy.Spec.Resource)
-	actual, err := clientInterface.Update(context.Background(), existingCopy, metav1.UpdateOptions{})
+	actual, err := clientInterface.Update(ctx, existingCopy, metav1.UpdateOptions{})
 	reportUpdateEvent(recorder, required, err)
 	return actual, true, err
+}
+
+func DeleteStorageVersionMigration(ctx context.Context, client migrationclientv1alpha1.Interface, recorder events.Recorder, required *migrationv1alpha1.StorageVersionMigration) (*migrationv1alpha1.StorageVersionMigration, bool, error) {
+	clientInterface := client.MigrationV1alpha1().StorageVersionMigrations()
+	err := clientInterface.Delete(ctx, required.Name, metav1.DeleteOptions{})
+	if err != nil && apierrors.IsNotFound(err) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	reportDeleteEvent(recorder, required, err)
+	return nil, true, nil
 }

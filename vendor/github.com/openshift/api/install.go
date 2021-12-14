@@ -20,6 +20,7 @@ import (
 	kextensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	kimagepolicyv1alpha1 "k8s.io/api/imagepolicy/v1alpha1"
 	knetworkingv1 "k8s.io/api/networking/v1"
+	kpolicyv1 "k8s.io/api/policy/v1"
 	kpolicyv1beta1 "k8s.io/api/policy/v1beta1"
 	krbacv1 "k8s.io/api/rbac/v1"
 	krbacv1alpha1 "k8s.io/api/rbac/v1alpha1"
@@ -41,6 +42,7 @@ import (
 	"github.com/openshift/api/image"
 	"github.com/openshift/api/imageregistry"
 	"github.com/openshift/api/kubecontrolplane"
+	"github.com/openshift/api/machine"
 	"github.com/openshift/api/network"
 	"github.com/openshift/api/networkoperator"
 	"github.com/openshift/api/oauth"
@@ -54,6 +56,7 @@ import (
 	"github.com/openshift/api/samples"
 	"github.com/openshift/api/security"
 	"github.com/openshift/api/servicecertsigner"
+	"github.com/openshift/api/sharedresource"
 	"github.com/openshift/api/template"
 	"github.com/openshift/api/user"
 
@@ -86,8 +89,10 @@ var (
 		samples.Install,
 		security.Install,
 		servicecertsigner.Install,
+		sharedresource.Install,
 		template.Install,
 		user.Install,
+		machine.Install,
 	)
 	// Install is a function which adds every version of every openshift group to a scheme
 	Install = schemeBuilder.AddToScheme
@@ -112,6 +117,7 @@ var (
 		kextensionsv1beta1.AddToScheme,
 		kimagepolicyv1alpha1.AddToScheme,
 		knetworkingv1.AddToScheme,
+		kpolicyv1.AddToScheme,
 		kpolicyv1beta1.AddToScheme,
 		krbacv1.AddToScheme,
 		krbacv1beta1.AddToScheme,

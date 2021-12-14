@@ -28,7 +28,7 @@ import (
 // <name>Degraded: produced when the sync() method returns an error.
 type CredentialsRequestController struct {
 	name            string
-	operatorClient  v1helpers.OperatorClient
+	operatorClient  v1helpers.OperatorClientWithFinalizers
 	targetNamespace string
 	manifest        []byte
 	dynamicClient   dynamic.Interface
@@ -40,7 +40,7 @@ func NewCredentialsRequestController(
 	targetNamespace string,
 	manifest []byte,
 	dynamicClient dynamic.Interface,
-	operatorClient v1helpers.OperatorClient,
+	operatorClient v1helpers.OperatorClientWithFinalizers,
 	recorder events.Recorder,
 ) factory.Controller {
 	c := &CredentialsRequestController{
@@ -73,7 +73,7 @@ func (c CredentialsRequestController) sync(ctx context.Context, syncContext fact
 		return err
 	}
 
-	cr, err := c.syncCredentialsRequest(status, syncContext)
+	cr, err := c.syncCredentialsRequest(ctx, status, syncContext)
 	if err != nil {
 		return err
 	}
@@ -103,6 +103,7 @@ func (c CredentialsRequestController) sync(ctx context.Context, syncContext fact
 	}
 
 	_, _, err = v1helpers.UpdateStatus(
+		ctx,
 		c.operatorClient,
 		v1helpers.UpdateConditionFn(availableCondition),
 		v1helpers.UpdateConditionFn(progressingCondition),
@@ -111,6 +112,7 @@ func (c CredentialsRequestController) sync(ctx context.Context, syncContext fact
 }
 
 func (c CredentialsRequestController) syncCredentialsRequest(
+	ctx context.Context,
 	status *opv1.OperatorStatus,
 	syncContext factory.SyncContext,
 ) (*unstructured.Unstructured, error) {
@@ -133,7 +135,7 @@ func (c CredentialsRequestController) syncCredentialsRequest(
 		expectedGeneration = generation.LastGeneration
 	}
 
-	cr, _, err = resourceapply.ApplyCredentialsRequest(c.dynamicClient, syncContext.Recorder(), cr, expectedGeneration)
+	cr, _, err = resourceapply.ApplyCredentialsRequest(ctx, c.dynamicClient, syncContext.Recorder(), cr, expectedGeneration)
 	return cr, err
 }
 

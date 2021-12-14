@@ -105,7 +105,7 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// TODO: report error after some while?
-			klog.V(2).Infof("Waiting for configmap %s from %s", util.CloudCredentialSecretName, util.ConfigMapNamespace)
+			klog.V(2).Infof("Waiting for configmap %s from %s", util.ConfigMapName, util.ConfigMapNamespace)
 			return nil
 		}
 		klog.V(2).ErrorS(err, "Configmap listener failed to get cm details")
@@ -118,7 +118,7 @@ func (c *SecretSyncController) sync(ctx context.Context, syncCtx factory.SyncCon
 		klog.V(2).ErrorS(err, "Error while extracting data from secret/cm")
 		return err
 	}
-	_, _, err = resourceapply.ApplySecret(c.kubeClient.CoreV1(), c.eventRecorder, driverSecret)
+	_, _, err = resourceapply.ApplySecret(ctx, c.kubeClient.CoreV1(), c.eventRecorder, driverSecret)
 	if err != nil {
 		klog.V(2).ErrorS(err, "Error while creating the secret")
 		return err
