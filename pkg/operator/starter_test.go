@@ -29,7 +29,7 @@ func fakeKubeConfig() *rest.Config {
 
 func fakeEventRecorder() events.Recorder {
 	clientset := fake.NewSimpleClientset()
-	controllerRef, _ := events.GetControllerReferenceForCurrentPod(clientset, Namespace, nil)
+	controllerRef, _ := events.GetControllerReferenceForCurrentPod(context.TODO(), clientset, Namespace, nil)
 	eventRecorder := events.NewKubeRecorderWithOptions(
 		clientset.CoreV1().Events(Namespace),
 		record.CorrelatorOptions{},
