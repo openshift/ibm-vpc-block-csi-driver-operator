@@ -1,4 +1,4 @@
-module github.com/IBM/ibm-vpc-block-csi-driver-operator
+module github.com/openshift/ibm-vpc-block-csi-driver-operator
 
 go 1.16
 
@@ -10,7 +10,6 @@ require (
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/openshift/library-go v0.0.0-20211214183058-58531ccbde67
 	github.com/spf13/cobra v1.2.1
-	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	k8s.io/api v0.23.0
 	k8s.io/apimachinery v0.23.0

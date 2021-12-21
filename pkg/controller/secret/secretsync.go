@@ -9,6 +9,7 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	operatorv1 "github.com/openshift/api/operator/v1"
+	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/util"
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"github.com/openshift/library-go/pkg/operator/events"
 	"github.com/openshift/library-go/pkg/operator/resource/resourceapply"
@@ -19,8 +20,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	corelisters "k8s.io/client-go/listers/core/v1"
 	"k8s.io/klog/v2"
-
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
 
 // This SecretSyncController translates Secret provided by cloud-credential-operator into

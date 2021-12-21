@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
+	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/util"
 	k8v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
