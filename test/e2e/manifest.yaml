@@ -1,0 +1,30 @@
+# Test manifest for https://github.com/kubernetes/kubernetes/tree/master/test/e2e/storage/external
+ShortName: ibm-vpc-block
+StorageClass:
+  FromExistingClassName: ibmc-vpc-block-10iops-tier
+SnapshotClass:
+  FromName: true
+DriverInfo:
+  Name: vpc.block.csi.ibm.io
+  SupportedSizeRange:
+    Min: 10Gi
+    Max: 2Ti
+  SupportedFsType:
+    xfs: {}
+    ext4: {}
+  SupportedMountOption:
+    dirsync: {}
+  TopologyKeys: ["failure-domain.beta.kubernetes.io/zone"]
+  Capabilities:
+    persistence: true
+    block: true
+    exec: true
+    fsGroup: false
+    snapshotDataSource: false
+    pvcDataSource: false
+    multipods: false
+    RWX: false
+    controllerExpansion: true
+    nodeExpansion: true
+    volumeLimits: false
+    topology: true
