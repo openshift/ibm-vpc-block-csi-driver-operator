@@ -28,3 +28,4 @@ parameters:
   zone: ""
 provisioner: vpc.block.csi.ibm.io
 reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer

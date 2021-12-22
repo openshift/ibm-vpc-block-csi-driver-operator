@@ -3,29 +3,30 @@ package operator
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"k8s.io/client-go/dynamic"
-	"time"
+
+	"os"
+	"strings"
 
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
-	"os"
-	"strings"
 
 	opv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	configinformers "github.com/openshift/client-go/config/informers/externalversions"
+	"github.com/openshift/ibm-vpc-block-csi-driver-operator/assets"
+	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
+	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/util"
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
 	"github.com/openshift/library-go/pkg/operator/csi/csicontrollerset"
 	"github.com/openshift/library-go/pkg/operator/csi/csidrivercontrollerservicecontroller"
 	"github.com/openshift/library-go/pkg/operator/csi/csidrivernodeservicecontroller"
 	goc "github.com/openshift/library-go/pkg/operator/genericoperatorclient"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
-
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/assets"
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
-	"github.com/IBM/ibm-vpc-block-csi-driver-operator/pkg/util"
 )
 
 func readFileAndReplace(name string) ([]byte, error) {
