@@ -6,8 +6,6 @@ metadata:
     app: ibm-vpc-block-csi-driver
     addonmanager.kubernetes.io/mode: Reconcile
     razee/force-apply: "true"
-  annotations:
-    version: 2.0.3_354
 provisioner: vpc.block.csi.ibm.io
 parameters:
   profile: "10iops-tier"              # The VPC Storage profile used.
