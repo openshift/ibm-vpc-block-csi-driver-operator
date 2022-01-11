@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - args:
-            - --v=5
+            - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
           name: csi-resizer
@@ -38,7 +38,7 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - args:
-            - --v=5
+            - --v=${LOG_LEVEL}
             - --csi-address=$(ADDRESS)
             - --timeout=600s
             - --feature-gates=Topology=true
@@ -62,7 +62,7 @@ spec:
             - mountPath: /csi
               name: socket-dir
         - args:
-            - --v=5
+            - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
           image: ${ATTACHER_IMAGE}
@@ -100,7 +100,7 @@ spec:
             - mountPath: /csi
               name: socket-dir
         - args:
-            - --v=5
+            - --v=${LOG_LEVEL}
             - --endpoint=$(CSI_ENDPOINT)
             - --lock_enabled=false
           env:

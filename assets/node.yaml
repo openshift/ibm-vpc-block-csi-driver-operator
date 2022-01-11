@@ -41,7 +41,7 @@ spec:
               name: customer-auth
       containers:
         - args:
-            - --v=5
+            - --v=${LOG_LEVEL}
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REGISTRATION_SOCK)
           env:
@@ -80,7 +80,7 @@ spec:
             - mountPath: /registration
               name: registration-dir
         - args:
-            - --v=5
+            - --v=${LOG_LEVEL}
             - --endpoint=unix:/csi/csi.sock
           env:
             - name: KUBE_NODE_NAME
