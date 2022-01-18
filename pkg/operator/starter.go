@@ -47,6 +47,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	kubeClient := kubeclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
 	kubeInformersForNamespaces := v1helpers.NewKubeInformersForNamespaces(kubeClient, util.OperatorNamespace, "", util.ConfigMapNamespace)
 	secretInformer := kubeInformersForNamespaces.InformersFor(util.OperatorNamespace).Core().V1().Secrets()
+	configMapInformer := kubeInformersForNamespaces.InformersFor(util.OperatorNamespace).Core().V1().ConfigMaps()
 	nodeInformer := kubeInformersForNamespaces.InformersFor("").Core().V1().Nodes()
 
 	// Create config clientset and informer. This is used to get the cluster ID
@@ -82,6 +83,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"controller_sa.yaml",
 			"csidriver.yaml",
 			"node_sa.yaml",
+			"cabundle_cm.yaml",
 			"rbac/attacher_role.yaml",
 			"rbac/attacher_rolebinding.yaml",
 			"rbac/provisioner_binding.yaml",
@@ -109,16 +111,27 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		[]factory.Informer{
 			nodeInformer.Informer(),
 			secretInformer.Informer(),
+			configMapInformer.Informer(),
 		},
 		csidrivercontrollerservicecontroller.WithObservedProxyDeploymentHook(),
+		csidrivercontrollerservicecontroller.WithCABundleDeploymentHook(
+			util.OperatorNamespace,
+			util.TrustedCAConfigMap,
+			configMapInformer,
+		),
 	).WithCSIDriverNodeService(
 		"IBMBlockDriverNodeServiceController",
 		readFileAndReplace,
 		"node.yaml",
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
-		nil,
+		[]factory.Informer{configMapInformer.Informer()},
 		csidrivernodeservicecontroller.WithObservedProxyDaemonSetHook(),
+		csidrivernodeservicecontroller.WithCABundleDaemonSetHook(
+			util.OperatorNamespace,
+			util.TrustedCAConfigMap,
+			configMapInformer,
+		),
 	)
 
 	if err != nil {
