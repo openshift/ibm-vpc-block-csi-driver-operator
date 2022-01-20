@@ -6,6 +6,9 @@ metadata:
     app: ibm-vpc-block-csi-driver
   name: ibm-vpc-block-csi-controller
   namespace: openshift-cluster-csi-drivers
+  annotations:
+    config.openshift.io/inject-proxy: csi-driver
+    config.openshift.io/inject-proxy-cabundle: csi-driver
 spec:
   replicas: 1
   selector:
