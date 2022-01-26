@@ -9,15 +9,12 @@ metadata:
     razee/force-apply: "true"
   name: ibmc-vpc-block-10iops-tier
 parameters:
-  billingType: hourly
-  classVersion: "1"
   csi.storage.k8s.io/fstype: ext4
   encrypted: "false"
   encryptionKey: ""
   profile: 10iops-tier
   region: ""
   resourceGroup: ""
-  sizeRange: '[10-2000]GiB'
   tags: ""
   zone: ""
 provisioner: vpc.block.csi.ibm.io
