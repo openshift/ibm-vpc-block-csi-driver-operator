@@ -7,8 +7,6 @@ metadata:
     razee/force-apply: "true"
   name: ibmc-vpc-block-custom
 parameters:
-  billingType: hourly
-  classVersion: "1"
   csi.storage.k8s.io/fstype: ext4
   encrypted: "false"
   encryptionKey: ""
@@ -16,14 +14,6 @@ parameters:
   profile: custom
   region: ""
   resourceGroup: ""
-  sizeIOPSRange: |-
-    [10-39]GiB:[100-1000]
-    [40-79]GiB:[100-2000]
-    [80-99]GiB:[100-4000]
-    [100-499]GiB:[100-6000]
-    [500-999]GiB:[100-10000]
-    [1000-1999]GiB:[100-20000]
-  sizeRange: '[10-2000]GiB'
   tags: ""
   zone: ""
 provisioner: vpc.block.csi.ibm.io
