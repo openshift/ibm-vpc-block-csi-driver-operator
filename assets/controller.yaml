@@ -14,6 +14,11 @@ spec:
   selector:
     matchLabels:
       app: ibm-vpc-block-csi-driver
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   template:
     metadata:
       labels:
@@ -31,9 +36,6 @@ spec:
             privileged: false
             allowPrivilegeEscalation: false
           resources:
-            limits:
-              cpu: 80m
-              memory: 160Mi
             requests:
               cpu: 20m
               memory: 40Mi
@@ -55,9 +57,6 @@ spec:
           imagePullPolicy: Always
           name: csi-provisioner
           resources:
-            limits:
-              cpu: 100m
-              memory: 100Mi
             requests:
               cpu: 10m
               memory: 20Mi
@@ -75,9 +74,6 @@ spec:
           imagePullPolicy: Always
           name: csi-attacher
           resources:
-            limits:
-              cpu: 100m
-              memory: 100Mi
             requests:
               cpu: 10m
               memory: 20Mi
@@ -93,9 +89,6 @@ spec:
             privileged: false
             allowPrivilegeEscalation: false
           resources:
-            limits:
-              cpu: 50m
-              memory: 50Mi
             requests:
               cpu: 5m
               memory: 10Mi
@@ -137,9 +130,6 @@ spec:
               name: healthz
               protocol: TCP
           resources:
-            limits:
-              cpu: 500m
-              memory: 500Mi
             requests:
               cpu: 50m
               memory: 100Mi
@@ -149,6 +139,7 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
+      priorityClassName: system-cluster-critical
       serviceAccountName: ibm-vpc-block-controller-sa
       volumes:
         - emptyDir: {}
