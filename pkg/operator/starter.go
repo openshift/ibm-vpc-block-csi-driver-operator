@@ -3,8 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"k8s.io/client-go/dynamic"
 
@@ -52,7 +50,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 
 	// Create config clientset and informer. This is used to get the cluster ID
 	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
-	configInformers := configinformers.NewSharedInformerFactory(configClient, 20*time.Minute)
+	configInformers := configinformers.NewSharedInformerFactory(configClient, util.Resync)
 
 	// Create GenericOperatorclient. This is used by the library-go controllers created down below
 	gvr := opv1.GroupVersion.WithResource("clustercsidrivers")
