@@ -24,6 +24,3 @@ const (
 	// Name of the configmap with the injected trusted CA bundle
 	TrustedCAConfigMap = "ibm-vpc-block-csi-driver-trusted-ca-bundle"
 )
-
-//- name: csi-resizer
-//image: k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
