@@ -193,18 +193,23 @@ func defaultGetResourceID(resourceName, accountID, apiKey string) (string, error
 	}
 	listResourceGroupsOptions := serviceClient.NewListResourceGroupsOptions()
 	listResourceGroupsOptions.SetAccountID(accountID)
-	resourceGroupList, _, err := serviceClient.ListResourceGroups(listResourceGroupsOptions)
+	listResourceGroupsOptions.SetName(resourceName)
+	resourceGroupList, detailedResponse, err := serviceClient.ListResourceGroups(listResourceGroupsOptions)
 
 	if err != nil {
 		return "", err
 	}
+
 	if len(resourceGroupList.Resources) > 0 {
 		for _, v := range resourceGroupList.Resources {
-			if *v.Name == resourceName {
+			if v.Name != nil && *v.Name == resourceName {
 				resourceID := *v.ID
 				return resourceID, nil
 			}
 		}
 	}
-	return "", fmt.Errorf("Resource %s not found for given g2Credentials", resourceName)
+	transactionId := detailedResponse.Headers.Get("Transaction-Id")
+	klog.V(2).Infof("%s TransactionId for the resource group %s", transactionId, resourceName)
+
+	return "", fmt.Errorf("Resource group '%s' could not locate at the moment, controller will retry after %s.", resourceName, util.Resync.String())
 }
