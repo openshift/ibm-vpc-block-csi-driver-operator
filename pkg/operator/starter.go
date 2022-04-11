@@ -92,7 +92,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/resizer_rolebinding.yaml",
 			"rbac/initcontainer_role.yaml",
 			"rbac/initcontainer_rolebinding.yaml",
-			"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-custom-StorageClass.yaml",
 		},
@@ -130,6 +129,12 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			util.TrustedCAConfigMap,
 			configMapInformer,
 		),
+	).WithDefaultStorageClassController(
+		"AlibabaCloudDriverCSIDefaultStorageClassController",
+		assets.ReadFile,
+		"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
+		kubeClient,
+		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
 	)
 
 	if err != nil {
