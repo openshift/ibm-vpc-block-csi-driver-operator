@@ -590,6 +590,8 @@ github.com/openshift/library-go v0.0.0-20220308152156-227dd2b19774 h1:GeCzQyJQ8b
 github.com/openshift/library-go v0.0.0-20220308152156-227dd2b19774/go.mod h1:6AmNM4N4nHftckybV/U7bQW+5AvK5TW81ndSI6KEidw=
 github.com/openshift/library-go v0.0.0-20220414091252-b28506bc43e5 h1:L1iWJqQt+IkYknLerw+AN3pOlbPX1gHCeAdbH/BnNgs=
 github.com/openshift/library-go v0.0.0-20220414091252-b28506bc43e5/go.mod h1:QGr0pban45i4G7e1Z1yH1tcUrceok6QXrqqjSDb2q8M=
+github.com/openshift/library-go v0.0.0-20220419144511-5b7d3d77b85e h1:3It5BG+6ik9UJRrwFytR3Canr6js2k1FhaL95X/p5eg=
+github.com/openshift/library-go v0.0.0-20220419144511-5b7d3d77b85e/go.mod h1:QGr0pban45i4G7e1Z1yH1tcUrceok6QXrqqjSDb2q8M=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pborman/uuid v1.2.0/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=

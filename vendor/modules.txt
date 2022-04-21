@@ -255,7 +255,7 @@ github.com/openshift/client-go/config/informers/externalversions/config
 github.com/openshift/client-go/config/informers/externalversions/config/v1
 github.com/openshift/client-go/config/informers/externalversions/internalinterfaces
 github.com/openshift/client-go/config/listers/config/v1
-# github.com/openshift/library-go v0.0.0-20220414091252-b28506bc43e5
+# github.com/openshift/library-go v0.0.0-20220419144511-5b7d3d77b85e
 ## explicit; go 1.17
 github.com/openshift/library-go/pkg/authorization/hardcodedauthorizer
 github.com/openshift/library-go/pkg/config/client
