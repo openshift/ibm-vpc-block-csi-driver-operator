@@ -45,6 +45,21 @@ rules:
       - watch
       - update
   - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+  - apiGroups:
       - security.openshift.io
     resourceNames:
       - privileged
