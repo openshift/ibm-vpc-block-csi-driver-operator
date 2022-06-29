@@ -99,6 +99,7 @@ spec:
             - --v=${LOG_LEVEL}
             - --endpoint=$(CSI_ENDPOINT)
             - --lock_enabled=false
+            - --extra-labels=kubernetes-io-cluster-${CLUSTER_ID}:owned
           env:
             - name: POD_NAME
               valueFrom:
