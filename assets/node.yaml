@@ -7,8 +7,8 @@ metadata:
   name: ibm-vpc-block-csi-node
   namespace: openshift-cluster-csi-drivers
   annotations:
-    config.openshift.io/inject-proxy: csi-driver
-    config.openshift.io/inject-proxy-cabundle: csi-driver
+    config.openshift.io/inject-proxy: csi-driver,vpc-node-label-updater
+    config.openshift.io/inject-proxy-cabundle: csi-driver,vpc-node-label-updater
 spec:
   selector:
     matchLabels:
