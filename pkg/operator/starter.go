@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+
 	"github.com/openshift/library-go/pkg/controller/factory"
 	"k8s.io/client-go/dynamic"
 
@@ -82,6 +83,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"csidriver.yaml",
 			"node_sa.yaml",
 			"cabundle_cm.yaml",
+			"volumesnapshotclass.yaml",
 			"rbac/attacher_role.yaml",
 			"rbac/attacher_rolebinding.yaml",
 			"rbac/provisioner_binding.yaml",
@@ -92,6 +94,8 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/resizer_rolebinding.yaml",
 			"rbac/initcontainer_role.yaml",
 			"rbac/initcontainer_rolebinding.yaml",
+			"rbac/snapshotter_binding.yaml",
+			"rbac/snapshotter_role.yaml",
 			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-custom-StorageClass.yaml",
 		},
