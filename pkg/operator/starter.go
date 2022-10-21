@@ -3,13 +3,12 @@ package operator
 import (
 	"context"
 	"fmt"
-
-	"github.com/openshift/library-go/pkg/controller/factory"
-	"k8s.io/client-go/dynamic"
-
 	"os"
 	"strings"
 
+	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
@@ -21,6 +20,7 @@ import (
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/util"
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
+	"github.com/openshift/library-go/pkg/controller/factory"
 	"github.com/openshift/library-go/pkg/operator/csi/csicontrollerset"
 	"github.com/openshift/library-go/pkg/operator/csi/csidrivercontrollerservicecontroller"
 	"github.com/openshift/library-go/pkg/operator/csi/csidrivernodeservicecontroller"
@@ -48,6 +48,12 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	secretInformer := kubeInformersForNamespaces.InformersFor(util.OperatorNamespace).Core().V1().Secrets()
 	configMapInformer := kubeInformersForNamespaces.InformersFor(util.OperatorNamespace).Core().V1().ConfigMaps()
 	nodeInformer := kubeInformersForNamespaces.InformersFor("").Core().V1().Nodes()
+
+	// Create apiextension client. This is used to verify is a VolumeSnapshotClass CRD exists.
+	apiExtClient, err := apiextclient.NewForConfig(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
+	if err != nil {
+		return err
+	}
 
 	// Create config clientset and informer. This is used to get the cluster ID
 	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
@@ -83,7 +89,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"csidriver.yaml",
 			"node_sa.yaml",
 			"cabundle_cm.yaml",
-			"volumesnapshotclass.yaml",
 			"rbac/attacher_role.yaml",
 			"rbac/attacher_rolebinding.yaml",
 			"rbac/provisioner_binding.yaml",
@@ -98,6 +103,25 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/snapshotter_role.yaml",
 			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-custom-StorageClass.yaml",
+		},
+	).WithConditionalStaticResourcesController(
+		"IBMBlockDriverConditionalStaticResourcesController",
+		kubeClient,
+		dynamicClient,
+		kubeInformersForNamespaces,
+		assets.ReadFile,
+		[]string{
+			"volumesnapshotclass.yaml",
+		},
+		// Only install when CRD exists.
+		func() bool {
+			name := "volumesnapshotclasses.snapshot.storage.k8s.io"
+			_, err := apiExtClient.ApiextensionsV1().CustomResourceDefinitions().Get(context.TODO(), name, metav1.GetOptions{})
+			return err == nil
+		},
+		// Don't ever remove.
+		func() bool {
+			return false
 		},
 	).WithCSIConfigObserverController(
 		"IBMBlockDriverCSIConfigObserverController",
