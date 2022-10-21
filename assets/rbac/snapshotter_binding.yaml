@@ -5,7 +5,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: ibm-vpc-block-controller-sa
-    namespace: kube-system
+    namespace: openshift-cluster-csi-drivers
 roleRef:
   kind: ClusterRole
   name: vpc-block-driver-snapshotter-role
