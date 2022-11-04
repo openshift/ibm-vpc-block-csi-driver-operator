@@ -27,4 +27,4 @@ DriverInfo:
     controllerExpansion: true
     nodeExpansion: true
     volumeLimits: false
-    topology: false
+    topology: true
