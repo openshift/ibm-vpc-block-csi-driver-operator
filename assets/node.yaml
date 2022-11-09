@@ -24,7 +24,6 @@ spec:
     spec:
       initContainers:
         - name: vpc-node-label-updater
-          imagePullPolicy: Always
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -40,6 +39,7 @@ spec:
             - name: SECRET_CONFIG_PATH
               value: /etc/storage_ibmc
           image: ${NODE_LABEL_IMAGE}
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
@@ -58,7 +58,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
           image: ${NODE_DRIVER_REGISTRAR_IMAGE}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
               exec:
@@ -92,7 +92,7 @@ spec:
             - configMapRef:
                 name: ibm-vpc-block-csi-configmap
           image: ${DRIVER_IMAGE}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           livenessProbe:
             failureThreshold: 5
             httpGet:
@@ -137,6 +137,7 @@ spec:
             - --csi-address=/csi/csi.sock
             - --v=${LOG_LEVEL}
           image: ${LIVENESS_PROBE_IMAGE}
+          imagePullPolicy: IfNotPresent
           name: liveness-probe
           securityContext:
             runAsNonRoot: false

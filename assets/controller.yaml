@@ -31,7 +31,7 @@ spec:
             - --timeout=900s
           name: csi-resizer
           image: ${RESIZER_IMAGE}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -51,10 +51,10 @@ spec:
             - name: ADDRESS
               value: /csi/csi.sock
           image: ${PROVISIONER_IMAGE}
+          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
-          imagePullPolicy: Always
           name: csi-provisioner
           resources:
             requests:
@@ -68,10 +68,10 @@ spec:
             - --csi-address=/csi/csi.sock
             - --timeout=900s
           image: ${ATTACHER_IMAGE}
+          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
-          imagePullPolicy: Always
           name: csi-attacher
           resources:
             requests:
@@ -84,6 +84,7 @@ spec:
             - --csi-address=/csi/csi.sock
             - --v=${LOG_LEVEL}
           image: ${LIVENESS_PROBE_IMAGE}
+          imagePullPolicy: IfNotPresent
           name: liveness-probe
           securityContext:
             privileged: false
@@ -92,6 +93,24 @@ spec:
             requests:
               cpu: 5m
               memory: 10Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - name: csi-snapshotter
+          image: ${SNAPSHOTTER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --v=${LOG_LEVEL}
+            - --csi-address=/csi/csi.sock
+            - --timeout=900s
+            - --leader-election=false
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -117,7 +136,7 @@ spec:
             - configMapRef:
                 name: ibm-vpc-block-csi-configmap
           image: ${DRIVER_IMAGE}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
