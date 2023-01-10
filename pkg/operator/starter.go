@@ -16,6 +16,8 @@ import (
 	opv1 "github.com/openshift/api/operator/v1"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	configinformers "github.com/openshift/client-go/config/informers/externalversions"
+	opclient "github.com/openshift/client-go/operator/clientset/versioned"
+	opinformers "github.com/openshift/client-go/operator/informers/externalversions"
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/assets"
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/controller/secret"
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/util"
@@ -59,6 +61,10 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	configClient := configclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
 	configInformers := configinformers.NewSharedInformerFactory(configClient, util.Resync)
 
+	// operator.openshift.io client, used for ClusterCSIDriver
+	operatorClientSet := opclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
+	operatorInformers := opinformers.NewSharedInformerFactory(operatorClientSet, util.Resync)
+
 	// Create GenericOperatorclient. This is used by the library-go controllers created down below
 	gvr := opv1.GroupVersion.WithResource("clustercsidrivers")
 	operatorClient, dynamicInformers, err := goc.NewClusterScopedOperatorClientWithConfigName(controllerConfig.KubeConfig, gvr, util.InstanceName)
@@ -101,8 +107,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/initcontainer_rolebinding.yaml",
 			"rbac/snapshotter_binding.yaml",
 			"rbac/snapshotter_role.yaml",
-			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
-			"storageclass/vpc-block-custom-StorageClass.yaml",
 		},
 	).WithConditionalStaticResourcesController(
 		"IBMBlockDriverConditionalStaticResourcesController",
@@ -160,9 +164,14 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	).WithStorageClassController(
 		"IBMBlockStorageClassController",
 		assets.ReadFile,
-		"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
+		[]string{
+			"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
+			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
+			"storageclass/vpc-block-custom-StorageClass.yaml",
+		},
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(""),
+		operatorInformers,
 	)
 
 	if err != nil {
@@ -180,6 +189,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	go kubeInformersForNamespaces.Start(ctx.Done())
 	go dynamicInformers.Start(ctx.Done())
 	go configInformers.Start(ctx.Done())
+	go operatorInformers.Start(ctx.Done())
 
 	klog.Info("Starting controllerset")
 	go secretSyncController.Run(ctx, 1)
