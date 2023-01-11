@@ -133,6 +133,8 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
+            - name: etc-selinux
+              mountPath: /etc/selinux
         - args:
             - --csi-address=/csi/csi.sock
             - --v=${LOG_LEVEL}
@@ -190,3 +192,7 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
+        - name: etc-selinux
+          hostPath:
+            path: /etc/selinux
+            type: DirectoryOrCreate
