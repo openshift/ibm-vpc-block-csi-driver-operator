@@ -28,3 +28,4 @@ DriverInfo:
     nodeExpansion: true
     volumeLimits: false
     topology: true
+    multiplePVsSameID: true
