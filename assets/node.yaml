@@ -21,6 +21,8 @@ spec:
     metadata:
       labels:
         app: ibm-vpc-block-csi-driver
+      annotations:
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
     spec:
       initContainers:
         - name: vpc-node-label-updater
