@@ -25,9 +25,9 @@ rules:
       - list
       - watch
   - apiGroups:
-      - csi.storage.k8s.io
+      - storage.k8s.io
     resources:
-      - csinodeinfos
+      - csinodes
     verbs:
       - get
       - list
