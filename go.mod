@@ -5,11 +5,11 @@ go 1.19
 require (
 	github.com/IBM/go-sdk-core/v5 v5.10.0
 	github.com/IBM/platform-services-go-sdk v0.25.0
-	github.com/openshift/api v0.0.0-20230509100629-894b49f57a15
+	github.com/openshift/api v0.0.0-20230613151523-ba04973d3ed1
 	github.com/openshift/build-machinery-go v0.0.0-20230306181456-d321ffa04533
 	github.com/openshift/client-go v0.0.0-20230503144108-75015d2347cb
-	github.com/openshift/library-go v0.0.0-20230508110756-9b7abe2c9cbf
-	github.com/spf13/cobra v1.6.0
+	github.com/openshift/library-go v0.0.0-20230626162119-954ade536d6d
+	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
 	k8s.io/api v0.27.1
 	k8s.io/apiextensions-apiserver v0.27.1
