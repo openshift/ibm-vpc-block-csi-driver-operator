@@ -109,6 +109,8 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/initcontainer_rolebinding.yaml",
 			"rbac/snapshotter_binding.yaml",
 			"rbac/snapshotter_role.yaml",
+			"rbac/lease_leader_election_role.yaml",
+			"rbac/lease_leader_election_rolebinding.yaml",
 		},
 	).WithConditionalStaticResourcesController(
 		"IBMBlockDriverConditionalStaticResourcesController",
