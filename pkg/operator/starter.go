@@ -95,8 +95,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"csidriver.yaml",
 			"node_sa.yaml",
 			"cabundle_cm.yaml",
-			"rbac/attacher_role.yaml",
-			"rbac/attacher_rolebinding.yaml",
 			"rbac/main_attacher_binding.yaml",
 			"rbac/provisioner_binding.yaml",
 			"rbac/provisioner_role.yaml",
