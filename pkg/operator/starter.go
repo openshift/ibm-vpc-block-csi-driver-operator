@@ -96,8 +96,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"node_sa.yaml",
 			"cabundle_cm.yaml",
 			"rbac/main_attacher_binding.yaml",
-			"rbac/provisioner_binding.yaml",
-			"rbac/provisioner_role.yaml",
 			"rbac/main_provisioner_binding.yaml",
 			"rbac/volumesnapshot_reader_provisioner_binding.yaml",
 			"rbac/configmap_and_secret_reader_provisioner_binding.yaml",
