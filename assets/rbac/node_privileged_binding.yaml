@@ -1,0 +1,15 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ibm-vpc-node-privileged-binding
+  labels:
+    app: ibm-vpc-block-csi-driver
+    addonmanager.kubernetes.io/mode: Reconcile
+subjects:
+  - kind: ServiceAccount
+    name: ibm-vpc-block-node-sa
+    namespace: openshift-cluster-csi-drivers
+roleRef:
+  kind: ClusterRole
+  name: ibm-vpc-block-privileged-role
+  apiGroup: rbac.authorization.k8s.io
