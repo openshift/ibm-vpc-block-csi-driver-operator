@@ -4,12 +4,12 @@ metadata:
   labels:
     addonmanager.kubernetes.io/mode: Reconcile
     app: ibm-vpc-block-csi-driver
-  name: vpc-block-driver-registrar-binding
+  name: vpc-block-main-provisioner-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: vpc-block-driver-registrar-role
+  name: openshift-csi-main-provisioner-role
 subjects:
   - kind: ServiceAccount
-    name: ibm-vpc-block-node-sa
+    name: ibm-vpc-block-controller-sa
     namespace: openshift-cluster-csi-drivers
