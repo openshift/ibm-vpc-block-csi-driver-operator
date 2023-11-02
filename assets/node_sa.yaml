@@ -1,9 +1,4 @@
 apiVersion: v1
-imagePullSecrets:
-  - name: bluemix-default-secret
-  - name: bluemix-default-secret-regional
-  - name: bluemix-default-secret-international
-  - name: icr-io-secret
 kind: ServiceAccount
 metadata:
   labels:
