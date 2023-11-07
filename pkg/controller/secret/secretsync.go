@@ -41,6 +41,12 @@ const (
 	CloudConfigmapKey = "cloud.conf"
 	// Name of the key in secret storage-secret-store creating on operator namespace
 	StorageSecretStoreKey = "slclient.toml"
+	// defaultTokenExchangeURL is used as fallback for g2_token_exchange_endpoint_url, if iamEndpointOverride isn't provided in the cloud-conf configmap.
+	defaultTokenExchangeURL = "https://iam.cloud.ibm.com"
+	// defaultRIAASEndpointURL is used as fallback for g2_riaas_endpoint_url, if g2EndpointOverride in the cloud-conf configmap.
+	defaultRIAASEndpointURL = "https://%s.iaas.cloud.ibm.com"
+	// iamEndpointOverride is the key expected in cloud conf config map, for the g2_token_exchange_endpoint_url to be overriden.
+	iamEndpointOverride = "iamEndpointOverride"
 
 	// storage-secret-store data format
 	StorageSecretTomlTemplate = `[vpc]
@@ -140,6 +146,14 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	var re *regexp.Regexp
 	var match []string
 
+	// Extracting the region from configmap
+	re = regexp.MustCompile("region = (.*?)\n")
+	match = re.FindStringSubmatch(conf)
+	if len(match) <= 0 {
+		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain region", util.ConfigMapName)
+	}
+	region := match[1]
+
 	re = regexp.MustCompile("g2ResourceGroupName = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
 	if len(match) <= 1 {
@@ -154,25 +168,15 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 	accountID := match[1]
 
-	re = regexp.MustCompile("iamEndpointOverride = (.*?)\n")
-	match = re.FindStringSubmatch(conf)
-	if len(match) <= 1 {
-		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain iamEndpointOverride", util.ConfigMapName)
+	iamEndpoint, err := fetchEndpoint("iamEndpointOverride", conf, defaultTokenExchangeURL)
+	if err != nil {
+		return nil, err
 	}
-	if _, err := url.ParseRequestURI(match[1]); err != nil {
-		return nil, fmt.Errorf("iamEndpointOverride provided is invalid, error: %v", err)
-	}
-	iamEndpoint := match[1]
 
-	re = regexp.MustCompile("g2EndpointOverride = (.*?)\n")
-	match = re.FindStringSubmatch(conf)
-	if len(match) <= 1 {
-		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain g2EndpointOverride", util.ConfigMapName)
+	riaasEndpoint, err := fetchEndpoint("g2EndpointOverride", conf, fmt.Sprintf(defaultRIAASEndpointURL, region))
+	if err != nil {
+		return nil, err
 	}
-	if _, err := url.ParseRequestURI(match[1]); err != nil {
-		return nil, fmt.Errorf("g2EndpointOverride provided is invalid, error: %v", err)
-	}
-	riaasEndpoint := match[1]
 
 	resourceId, err := c.getResourceID(resourceGroupName, accountID, string(apiKey))
 	if err != nil {
@@ -193,6 +197,27 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 
 	return &secret, nil
+}
+
+// fetchEndpoint fetches the url provided against endpointkey
+func fetchEndpoint(endpointkey, conf, defaultEndpointValue string) (string, error) {
+	var re *regexp.Regexp
+	var match []string
+
+	// Fetch url provided against endpointkey
+	re = regexp.MustCompile(fmt.Sprintf("%s = (.*?)\n", endpointkey))
+	match = re.FindStringSubmatch(conf)
+	// If the url doesn't exist return default value
+	if len(match) <= 1 {
+		return defaultEndpointValue, nil
+	}
+
+	// If the url exists, validate it
+	if _, err := url.ParseRequestURI(match[1]); err != nil {
+		return "", fmt.Errorf("%s provided is invalid, error: %v", endpointkey, err)
+	}
+
+	return match[1], nil
 }
 
 func defaultGetResourceID(resourceName, accountID, apiKey string) (string, error) {
