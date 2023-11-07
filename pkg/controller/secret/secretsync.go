@@ -181,7 +181,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 
 	// Creating secret data storage-secret-store
-	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, iamEndpoint, riaasEndpoint, region, resourceId, apiKey)
+	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, iamEndpoint, riaasEndpoint, resourceId, apiKey)
 	data := make(map[string][]byte)
 	data[StorageSecretStoreKey] = []byte(tomlData)
 	secret := v1.Secret{
