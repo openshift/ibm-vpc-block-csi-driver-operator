@@ -3,6 +3,7 @@ package secret
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"regexp"
 	"time"
 
@@ -158,12 +159,18 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	if len(match) <= 1 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain iamEndpointOverride", util.ConfigMapName)
 	}
+	if _, err := url.ParseRequestURI(match[1]); err != nil {
+		return nil, fmt.Errorf("iamEndpointOverride provided is invalid, error: %v", err)
+	}
 	iamEndpoint := match[1]
 
 	re = regexp.MustCompile("g2EndpointOverride = (.*?)\n")
 	match = re.FindStringSubmatch(conf)
 	if len(match) <= 1 {
 		return nil, fmt.Errorf("cloud-credential-operator configmap %s did not contain g2EndpointOverride", util.ConfigMapName)
+	}
+	if _, err := url.ParseRequestURI(match[1]); err != nil {
+		return nil, fmt.Errorf("g2EndpointOverride provided is invalid, error: %v", err)
 	}
 	riaasEndpoint := match[1]
 
