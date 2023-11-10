@@ -31,7 +31,7 @@ type SecretSyncController struct {
 	secretLister    corelisters.SecretLister
 	configMapLister corelisters.ConfigMapLister
 	eventRecorder   events.Recorder
-	getResourceID   func(resourceName, accountID, apiKey string) (string, error)
+	getResourceID   func(resourceName, accountID, apiKey, resourceManagerEndpoint, iamEndpoint string) (string, error)
 }
 
 const (
@@ -45,9 +45,14 @@ const (
 	defaultTokenExchangeURL = "https://iam.cloud.ibm.com"
 	// defaultRIAASEndpointURL is used as fallback for g2_riaas_endpoint_url, if g2EndpointOverride in the cloud-conf configmap.
 	defaultRIAASEndpointURL = "https://%s.iaas.cloud.ibm.com"
+	// defaultResourceManagerEndpoint is used as fallback if rmEndpointOverride is not provided in the cloud-conf configmap.
+	defaultResourceManagerEndpoint = "https://resource-controller.cloud.ibm.com"
 	// iamEndpointOverride is the key expected in cloud conf config map, for the g2_token_exchange_endpoint_url to be overriden.
 	iamEndpointOverride = "iamEndpointOverride"
-
+	// g2EndpointOverride is the key expected in cloud conf config map, for the g2_riaas_endpoint_url to be overriden.
+	g2EndpointOverride = "g2EndpointOverride"
+	// rmEndpointOverride is the key expected in cloud conf config map for resource manager endpoint.
+	rmEndpointOverride = "rmEndpointOverride"
 	// storage-secret-store data format
 	StorageSecretTomlTemplate = `[vpc]
 iam_client_id = "bx"
@@ -168,17 +173,13 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 	accountID := match[1]
 
-	iamEndpoint, err := fetchEndpoint("iamEndpointOverride", conf, defaultTokenExchangeURL)
-	if err != nil {
-		return nil, err
-	}
+	iamEndpoint := fetchEndpoint(iamEndpointOverride, conf, defaultTokenExchangeURL)
 
-	riaasEndpoint, err := fetchEndpoint("g2EndpointOverride", conf, fmt.Sprintf(defaultRIAASEndpointURL, region))
-	if err != nil {
-		return nil, err
-	}
+	riaasEndpoint := fetchEndpoint(g2EndpointOverride, conf, fmt.Sprintf(defaultRIAASEndpointURL, region))
 
-	resourceId, err := c.getResourceID(resourceGroupName, accountID, string(apiKey))
+	resourceManagerEndpoint := fetchEndpoint(rmEndpointOverride, conf, defaultResourceManagerEndpoint)
+
+	resourceId, err := c.getResourceID(resourceGroupName, accountID, string(apiKey), resourceManagerEndpoint, iamEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +201,7 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 }
 
 // fetchEndpoint fetches the url provided against endpointkey
-func fetchEndpoint(endpointkey, conf, defaultEndpointValue string) (string, error) {
+func fetchEndpoint(endpointkey, conf, defaultEndpointValue string) string {
 	var re *regexp.Regexp
 	var match []string
 
@@ -209,22 +210,24 @@ func fetchEndpoint(endpointkey, conf, defaultEndpointValue string) (string, erro
 	match = re.FindStringSubmatch(conf)
 	// If the url doesn't exist return default value
 	if len(match) <= 1 {
-		return defaultEndpointValue, nil
+		return defaultEndpointValue
 	}
 
 	// If the url exists, validate it
 	if _, err := url.ParseRequestURI(match[1]); err != nil {
-		return "", fmt.Errorf("%s provided is invalid, error: %v", endpointkey, err)
+		klog.V(2).ErrorS(err, "Endpoint provided is invalid", fmt.Sprintf("Endpoint: %s = %s", endpointkey, match[1]))
+		return defaultEndpointValue
 	}
 
-	return match[1], nil
+	return match[1]
 }
 
-func defaultGetResourceID(resourceName, accountID, apiKey string) (string, error) {
+func defaultGetResourceID(resourceName, accountID, apiKey, rmEndpoint, iamEndpoint string) (string, error) {
 	serviceClientOptions := &resourcemanagerv2.ResourceManagerV2Options{
-		URL:           "https://resource-controller.cloud.ibm.com",
-		Authenticator: &core.IamAuthenticator{ApiKey: apiKey},
+		URL:           rmEndpoint,
+		Authenticator: &core.IamAuthenticator{ApiKey: apiKey, URL: iamEndpoint},
 	}
+
 	serviceClient, err := resourcemanagerv2.NewResourceManagerV2UsingExternalConfig(serviceClientOptions)
 	if err != nil {
 		return "", err
