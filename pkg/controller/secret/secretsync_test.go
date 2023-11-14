@@ -258,11 +258,11 @@ func TestTranslateSecretSuccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := c.translateSecret(tt.args.cloudSecret, tt.args.cloudConf)
+			actualSecret, err := c.translateSecret(tt.args.cloudSecret, tt.args.cloudConf)
 			if err != nil {
 				t.Errorf("translateSecret() error: %v", err)
-			} else if !reflect.DeepEqual(got, want) {
-				t.Errorf("translateSecret() got = %v, want %v", *got, *tt.args.expectedSecret)
+			} else if !reflect.DeepEqual(actualSecret, tt.args.expectedSecret) {
+				t.Errorf("translateSecret() actualSecret = %v, expectedSecret = %v", *actualSecret, *tt.args.expectedSecret)
 			}
 		})
 	}
