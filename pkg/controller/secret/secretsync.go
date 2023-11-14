@@ -3,7 +3,6 @@ package secret
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"regexp"
 	"time"
 
@@ -209,13 +208,8 @@ func fetchEndpoint(endpointkey, conf, defaultEndpointValue string) string {
 	re = regexp.MustCompile(fmt.Sprintf("%s = (.*?)\n", endpointkey))
 	match = re.FindStringSubmatch(conf)
 	// If the url doesn't exist return default value
-	if len(match) <= 1 {
-		return defaultEndpointValue
-	}
-
-	// If the url exists, validate it
-	if _, err := url.ParseRequestURI(match[1]); err != nil {
-		klog.V(2).ErrorS(err, "Endpoint provided is invalid", fmt.Sprintf("Endpoint: %s = %s", endpointkey, match[1]))
+	if len(match) <= 1 || match[1] == "" {
+		klog.V(2).Infof("%s is not provided", endpointkey)
 		return defaultEndpointValue
 	}
 

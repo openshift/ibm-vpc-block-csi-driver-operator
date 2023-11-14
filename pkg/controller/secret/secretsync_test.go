@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func fakeGetResourceID(resourceName, accountID, apiKey string) (string, error) {
+func fakeGetResourceID(resourceName, accountID, apiKey, resourceManagerEndpoint, iamEndpoint string) (string, error) {
 	return "fakeid", nil
 }
 
@@ -156,43 +156,114 @@ func TestTranslateSecretSuccess(t *testing.T) {
 	secretName := "ibm-cloud-credential"
 	cmNamespace := "test-ns-cco"
 	cmName := "cloud-conf"
-	resourceId := "fakeid"
 	apiKey := "testapikey"
-	region := "region1"
 
-	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
-	data := make(map[string][]byte)
-	data[StorageSecretStoreKey] = []byte(tomlData)
-	want := &k8v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      util.IBMCSIDriverSecretName,
-			Namespace: util.OperatorNamespace,
+	type args struct {
+		cloudSecret    *k8v1.Secret
+		cloudConf      *k8v1.ConfigMap
+		expectedSecret *k8v1.Secret
+	}
+
+	tests := []struct {
+		name                string
+		args                args
+		region              string
+		g2ResourceGroupName string
+		accountID           string
+	}{
+		{
+			name: "All override endpoints provided",
+			args: args{
+				cloudSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      secretName,
+						Namespace: secretNamespace,
+					},
+					Data: map[string][]byte{cloudSecretKey: []byte(apiKey)},
+				},
+				cloudConf: &k8v1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      cmName,
+						Namespace: cmNamespace,
+					},
+					Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\niamEndpointOverride = https://private.iam.cloud.ibm.com\ng2EndpointOverride = https://eu-de.private.iaas.cloud.ibm.com\nrmEndpointOverride = https://private.resource-controller.cloud.ibm.com\n"},
+				},
+				expectedSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      util.IBMCSIDriverSecretName,
+						Namespace: util.OperatorNamespace,
+					},
+					Type: k8v1.SecretTypeOpaque,
+					Data: map[string][]byte{StorageSecretStoreKey: []byte(fmt.Sprintf(StorageSecretTomlTemplate, "https://private.iam.cloud.ibm.com", "https://eu-de.private.iaas.cloud.ibm.com", "fakeid", apiKey))},
+				},
+			},
+		}, {
+			name: "Empty override endpoints provided",
+			args: args{
+				cloudSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      secretName,
+						Namespace: secretNamespace,
+					},
+					Data: map[string][]byte{cloudSecretKey: []byte(apiKey)},
+				},
+				cloudConf: &k8v1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      cmName,
+						Namespace: cmNamespace,
+					},
+					Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\niamEndpointOverride = \ng2EndpointOverride = \nrmEndpointOverride = \n"},
+				},
+				expectedSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      util.IBMCSIDriverSecretName,
+						Namespace: util.OperatorNamespace,
+					},
+					Type: k8v1.SecretTypeOpaque,
+					Data: map[string][]byte{StorageSecretStoreKey: []byte(fmt.Sprintf(StorageSecretTomlTemplate, defaultTokenExchangeURL, defaultRIAASEndpointURL, "fakeid", apiKey))},
+				},
+			},
+		}, {
+			name: "No override endpoints provided",
+			args: args{
+				cloudSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      secretName,
+						Namespace: secretNamespace,
+					},
+					Data: map[string][]byte{cloudSecretKey: []byte(apiKey)},
+				},
+				cloudConf: &k8v1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      cmName,
+						Namespace: cmNamespace,
+					},
+					Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\n"},
+				},
+				expectedSecret: &k8v1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      util.IBMCSIDriverSecretName,
+						Namespace: util.OperatorNamespace,
+					},
+					Type: k8v1.SecretTypeOpaque,
+					Data: map[string][]byte{StorageSecretStoreKey: []byte(fmt.Sprintf(StorageSecretTomlTemplate, defaultTokenExchangeURL, defaultRIAASEndpointURL, "fakeid", apiKey))},
+				},
+			},
 		},
-		Type: k8v1.SecretTypeOpaque,
-		Data: data,
 	}
 
 	c := &SecretSyncController{
 		getResourceID: fakeGetResourceID,
 	}
-	cloudSecret := &k8v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: secretNamespace,
-		},
-		Data: map[string][]byte{cloudSecretKey: []byte(apiKey)},
-	}
-	cloudConf := &k8v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cmName,
-			Namespace: cmNamespace,
-		},
-		Data: map[string]string{CloudConfigmapKey: "region = region1\ng2ResourceGroupName = testresource\naccountID = testaccount\n"},
-	}
-	got, err := c.translateSecret(cloudSecret, cloudConf)
-	if err != nil {
-		t.Errorf("translateSecret() error: %v", err)
-	} else if !reflect.DeepEqual(got, want) {
-		t.Errorf("translateSecret() got = %v, want %v", *got, *want)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := c.translateSecret(tt.args.cloudSecret, tt.args.cloudConf)
+			if err != nil {
+				t.Errorf("translateSecret() error: %v", err)
+			} else if !reflect.DeepEqual(got, want) {
+				t.Errorf("translateSecret() got = %v, want %v", *got, *tt.args.expectedSecret)
+			}
+		})
 	}
 }
