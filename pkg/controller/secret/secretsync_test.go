@@ -220,7 +220,7 @@ func TestTranslateSecretSuccess(t *testing.T) {
 						Namespace: util.OperatorNamespace,
 					},
 					Type: k8v1.SecretTypeOpaque,
-					Data: map[string][]byte{StorageSecretStoreKey: []byte(fmt.Sprintf(StorageSecretTomlTemplate, fmt.Sprintf(defaultRIAASEndpointURL, "region1"), defaultRIAASEndpointURL, "fakeid", apiKey))},
+					Data: map[string][]byte{StorageSecretStoreKey: []byte(fmt.Sprintf(StorageSecretTomlTemplate, defaultTokenExchangeURL, fmt.Sprintf(defaultRIAASEndpointURL, "region1"), "fakeid", apiKey))},
 				},
 			},
 		}, {
