@@ -7,8 +7,8 @@ metadata:
   name: ibm-vpc-block-csi-node
   namespace: openshift-cluster-csi-drivers
   annotations:
-    config.openshift.io/inject-proxy: csi-driver,vpc-node-label-updater
-    config.openshift.io/inject-proxy-cabundle: csi-driver,vpc-node-label-updater
+    config.openshift.io/inject-proxy: csi-driver
+    config.openshift.io/inject-proxy-cabundle: csi-driver
 spec:
   selector:
     matchLabels:
@@ -24,27 +24,6 @@ spec:
       annotations:
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
     spec:
-      initContainers:
-        - name: vpc-node-label-updater
-          securityContext:
-            privileged: false
-            allowPrivilegeEscalation: false
-          resources:
-            requests:
-              cpu: 3m
-              memory: 6Mi
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: SECRET_CONFIG_PATH
-              value: /etc/storage_ibmc
-          image: ${NODE_LABEL_IMAGE}
-          imagePullPolicy: IfNotPresent
-          volumeMounts:
-            - mountPath: /etc/storage_ibmc
-              name: customer-auth
       containers:
         - args:
             - --v=${LOG_LEVEL}
