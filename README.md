@@ -37,12 +37,12 @@ make
 
 # Set the environment variables
 export DRIVER_IMAGE=gcr.io/k8s-staging-cloud-provider-ibm/ibm-vpc-block-csi-driver:master
-export PROVISIONER_IMAGE=k8s.gcr.io/sig-storage/csi-provisioner:v2.2.2
-export ATTACHER_IMAGE=k8s.gcr.io/sig-storage/csi-attacher:v3.2.1
-export NODE_DRIVER_REGISTRAR_IMAGE=k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.2.0
-export LIVENESS_PROBE_IMAGE=k8s.gcr.io/sig-storage/livenessprobe:v2.3.0
-export RESIZER_IMAGE=k8s.gcr.io/sig-storage/csi-resizer:v1.2.0
-export NODE_LABEL_IMAGE=icr.io/obs/storage/vpc-node-label-updater:v1.0.1
+export PROVISIONER_IMAGE=registry.k8s.io/sig-storage/csi-provisioner:v3.4.1
+export ATTACHER_IMAGE=registry.k8s.io/sig-storage/csi-attacher:v4.2.0
+export NODE_DRIVER_REGISTRAR_IMAGE=registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.7.0
+export LIVENESS_PROBE_IMAGE=registry.k8s.io/sig-storage/livenessprobe:v2.9.0
+export RESIZER_IMAGE=registry.k8s.io/sig-storage/csi-resizer:v1.7.0
+export SNAPSHOTTER_IMAGE=registry.k8s.io/sig-storage/csi-snapshotter:v6.2.1
 
 # Run the operator via CLI
 ./ibm-vpc-block-csi-driver-operator start --kubeconfig $MY_KUBECONFIG --namespace openshift-cluster-csi-drivers

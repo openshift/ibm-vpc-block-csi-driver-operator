@@ -30,7 +30,7 @@ type SecretSyncController struct {
 	secretLister    corelisters.SecretLister
 	configMapLister corelisters.ConfigMapLister
 	eventRecorder   events.Recorder
-	getResourceID   func(resourceName, accountID, apiKey string) (string, error)
+	getResourceID   func(resourceName, accountID, apiKey, resourceManagerEndpoint, iamEndpoint string) (string, error)
 }
 
 const (
@@ -40,14 +40,25 @@ const (
 	CloudConfigmapKey = "cloud.conf"
 	// Name of the key in secret storage-secret-store creating on operator namespace
 	StorageSecretStoreKey = "slclient.toml"
-
+	// defaultTokenExchangeURL is used as fallback for g2_token_exchange_endpoint_url, if iamEndpointOverride isn't provided in the cloud-conf configmap.
+	defaultTokenExchangeURL = "https://iam.cloud.ibm.com"
+	// defaultRIAASEndpointURL is used as fallback for g2_riaas_endpoint_url, if g2EndpointOverride in the cloud-conf configmap.
+	defaultRIAASEndpointURL = "https://%s.iaas.cloud.ibm.com"
+	// defaultResourceManagerEndpoint is used as fallback if rmEndpointOverride is not provided in the cloud-conf configmap.
+	defaultResourceManagerEndpoint = "https://resource-controller.cloud.ibm.com"
+	// iamEndpointOverride is the key expected in cloud conf config map, for the g2_token_exchange_endpoint_url to be overriden.
+	iamEndpointOverride = "iamEndpointOverride"
+	// g2EndpointOverride is the key expected in cloud conf config map, for the g2_riaas_endpoint_url to be overriden.
+	g2EndpointOverride = "g2EndpointOverride"
+	// rmEndpointOverride is the key expected in cloud conf config map for resource manager endpoint.
+	rmEndpointOverride = "rmEndpointOverride"
 	// storage-secret-store data format
 	StorageSecretTomlTemplate = `[vpc]
 iam_client_id = "bx"
 iam_client_secret = "bx"
-g2_token_exchange_endpoint_url = "https://iam.cloud.ibm.com"
-g2_riaas_endpoint_url = "https://%s.iaas.cloud.ibm.com"	
-g2_resource_group_id = "%s" 
+g2_token_exchange_endpoint_url = "%s"
+g2_riaas_endpoint_url = "%s"
+g2_resource_group_id = "%s"
 g2_api_key = "%s"
 provider_type = "g2"
 `
@@ -161,13 +172,19 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	}
 	accountID := match[1]
 
-	resourceId, err := c.getResourceID(resourceGroupName, accountID, string(apiKey))
+	iamEndpoint := fetchEndpoint(iamEndpointOverride, conf, defaultTokenExchangeURL)
+
+	riaasEndpoint := fetchEndpoint(g2EndpointOverride, conf, fmt.Sprintf(defaultRIAASEndpointURL, region))
+
+	resourceManagerEndpoint := fetchEndpoint(rmEndpointOverride, conf, defaultResourceManagerEndpoint)
+
+	resourceId, err := c.getResourceID(resourceGroupName, accountID, string(apiKey), resourceManagerEndpoint, iamEndpoint)
 	if err != nil {
 		return nil, err
 	}
 
 	// Creating secret data storage-secret-store
-	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, region, resourceId, apiKey)
+	tomlData := fmt.Sprintf(StorageSecretTomlTemplate, iamEndpoint, riaasEndpoint, resourceId, apiKey)
 	data := make(map[string][]byte)
 	data[StorageSecretStoreKey] = []byte(tomlData)
 	secret := v1.Secret{
@@ -182,11 +199,29 @@ func (c *SecretSyncController) translateSecret(cloudSecret *v1.Secret, cloudConf
 	return &secret, nil
 }
 
-func defaultGetResourceID(resourceName, accountID, apiKey string) (string, error) {
-	serviceClientOptions := &resourcemanagerv2.ResourceManagerV2Options{
-		URL:           "https://resource-controller.cloud.ibm.com",
-		Authenticator: &core.IamAuthenticator{ApiKey: apiKey},
+// fetchEndpoint fetches the url provided against endpointkey
+func fetchEndpoint(endpointkey, conf, defaultEndpointValue string) string {
+	var re *regexp.Regexp
+	var match []string
+
+	// Fetch url provided against endpointkey
+	re = regexp.MustCompile(fmt.Sprintf("%s = (.*?)\n", endpointkey))
+	match = re.FindStringSubmatch(conf)
+	// If the url doesn't exist return default value
+	if len(match) <= 1 || match[1] == "" {
+		klog.V(2).Infof("%s is not provided", endpointkey)
+		return defaultEndpointValue
 	}
+
+	return match[1]
+}
+
+func defaultGetResourceID(resourceName, accountID, apiKey, rmEndpoint, iamEndpoint string) (string, error) {
+	serviceClientOptions := &resourcemanagerv2.ResourceManagerV2Options{
+		URL:           rmEndpoint,
+		Authenticator: &core.IamAuthenticator{ApiKey: apiKey, URL: iamEndpoint},
+	}
+
 	serviceClient, err := resourcemanagerv2.NewResourceManagerV2UsingExternalConfig(serviceClientOptions)
 	if err != nil {
 		return "", err

@@ -3,8 +3,6 @@ package operator
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,19 +27,6 @@ import (
 	goc "github.com/openshift/library-go/pkg/operator/genericoperatorclient"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 )
-
-func readFileAndReplace(name string) ([]byte, error) {
-	pairs := []string{
-		"${NODE_LABEL_IMAGE}", os.Getenv("NODE_LABEL_IMAGE"),
-	}
-	fileBytes, err := assets.ReadFile(name)
-	if err != nil {
-		return nil, err
-	}
-	policyReplacer := strings.NewReplacer(pairs...)
-	transformedString := policyReplacer.Replace(string(fileBytes))
-	return []byte(transformedString), nil
-}
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
 	// Create core clientset and informers
@@ -101,8 +86,6 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"rbac/configmap_and_secret_reader_provisioner_binding.yaml",
 			"rbac/node_privileged_binding.yaml",
 			"rbac/privileged_role.yaml",
-			"rbac/node_label_updater_binding.yaml",
-			"rbac/label_updater_role.yaml",
 			"rbac/main_resizer_binding.yaml",
 			"rbac/initcontainer_role.yaml",
 			"rbac/initcontainer_rolebinding.yaml",
@@ -152,7 +135,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		),
 	).WithCSIDriverNodeService(
 		"IBMBlockDriverNodeServiceController",
-		readFileAndReplace,
+		assets.ReadFile,
 		"node.yaml",
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(util.OperatorNamespace),
