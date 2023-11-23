@@ -157,6 +157,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(""),
 		operatorInformers,
+		getEncryptionKey(operatorInformers.Operator().V1().ClusterCSIDrivers().Lister()),
 	)
 
 	if err != nil {

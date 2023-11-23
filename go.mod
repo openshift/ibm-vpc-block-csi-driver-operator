@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/IBM/go-sdk-core/v5 v5.10.0
 	github.com/IBM/platform-services-go-sdk v0.25.0
-	github.com/openshift/api v0.0.0-20231010075512-1ccc6058c62d
+	github.com/openshift/api v0.0.0-20231122131545-29a7d9c7f590
 	github.com/openshift/build-machinery-go v0.0.0-20230306181456-d321ffa04533
 	github.com/openshift/client-go v0.0.0-20230926161409-848405da69e1
 	github.com/openshift/library-go v0.0.0-20231020125034-5a2d9fe760b3

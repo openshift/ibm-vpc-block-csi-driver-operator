@@ -8,7 +8,7 @@ metadata:
   name: ibmc-vpc-block-5iops-tier
 parameters:
   csi.storage.k8s.io/fstype: ext4
-  encrypted: "false"
+  encrypted: "true"
   encryptionKey: ""
   profile: 5iops-tier
   region: ""

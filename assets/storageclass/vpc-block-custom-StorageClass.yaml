@@ -8,7 +8,7 @@ metadata:
   name: ibmc-vpc-block-custom
 parameters:
   csi.storage.k8s.io/fstype: ext4
-  encrypted: "false"
+  encrypted: "true"
   encryptionKey: ""
   iops: "400"
   profile: custom
