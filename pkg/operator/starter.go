@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +28,28 @@ import (
 	goc "github.com/openshift/library-go/pkg/operator/genericoperatorclient"
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 )
+
+func readFileAndReplace(name string) ([]byte, error) {
+	fileBytes, err := assets.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if crn == "" {
+		return fileBytes, nil
+	}
+
+	key := fmt.Sprintf("encrypted: \"%s\"", "true")
+	value := fmt.Sprintf("encryptionKey: \"%s\"", crn)
+
+	pairs := []string{
+		"encrypted: \"false\"", key, "encryptionKey: \"\"", value,
+	}
+
+	policyReplacer := strings.NewReplacer(pairs...)
+	transformedString := policyReplacer.Replace(string(fileBytes))
+	return []byte(transformedString), nil
+}
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
 	// Create core clientset and informers
@@ -62,6 +85,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		return err
 	}
 
+	setEncryptionKey(operatorInformers.Operator().V1().ClusterCSIDrivers().Lister())
 	csiControllerSet := csicontrollerset.NewCSIControllerSet(
 		operatorClient,
 		controllerConfig.EventRecorder,
@@ -148,7 +172,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		),
 	).WithStorageClassController(
 		"IBMBlockStorageClassController",
-		assets.ReadFile,
+		readFileAndReplace,
 		[]string{
 			"storageclass/vpc-block-10iopsTier-StorageClass.yaml",
 			"storageclass/vpc-block-5iopsTier-StorageClass.yaml",
