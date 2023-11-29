@@ -5,7 +5,8 @@ go 1.20
 require (
 	github.com/IBM/go-sdk-core/v5 v5.10.0
 	github.com/IBM/platform-services-go-sdk v0.25.0
-	github.com/openshift/api v0.0.0-20231120145327-841b3aa7251d
+	github.com/google/go-cmp v0.6.0
+	github.com/openshift/api v0.0.0-20231122131545-29a7d9c7f590
 	github.com/openshift/build-machinery-go v0.0.0-20230824093055-6a18da01283c
 	github.com/openshift/client-go v0.0.0-20231110140829-a6ca51f6d5ba
 	github.com/openshift/library-go v0.0.0-20231120141757-bd996d74a24c
@@ -50,7 +51,6 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/cel-go v0.16.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect

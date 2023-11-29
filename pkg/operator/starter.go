@@ -28,6 +28,11 @@ import (
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 )
 
+const (
+	encryptionKeyParameter = "encryptionKey"
+	encryptedParameter     = "encrypted"
+)
+
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
 	// Create core clientset and informers
 	kubeClient := kubeclient.NewForConfigOrDie(rest.AddUserAgent(controllerConfig.KubeConfig, util.OperatorName))
@@ -157,6 +162,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeClient,
 		kubeInformersForNamespaces.InformersFor(""),
 		operatorInformers,
+		getEncryptionKeyHook(operatorInformers.Operator().V1().ClusterCSIDrivers().Lister()),
 	)
 
 	if err != nil {
