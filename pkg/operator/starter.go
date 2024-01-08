@@ -2,7 +2,6 @@ package operator
 
 import (
 	"context"
-	"fmt"
 
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -188,5 +187,5 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 
 	<-ctx.Done()
 
-	return fmt.Errorf("stopped")
+	return nil
 }
