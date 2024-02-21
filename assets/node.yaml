@@ -30,6 +30,7 @@ spec:
         - args:
             - --v=${LOG_LEVEL}
             - --csi-address=$(ADDRESS)
+            - --http-endpoint=:10303
             - --kubelet-registration-path=$(DRIVER_REGISTRATION_SOCK)
           env:
             - name: ADDRESS
@@ -50,10 +51,21 @@ spec:
                   - -c
                   - rm -rf /registration/vpc.block.csi.ibm.io /registration/vpc.block.csi.ibm.io-reg.sock
           name: csi-driver-registrar
+          ports:
+            - containerPort: 10303
+              name: rhealthz
           securityContext:
             runAsNonRoot: false
             runAsUser: 0
             privileged: false
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: rhealthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
           resources:
             requests:
               cpu: 10m
