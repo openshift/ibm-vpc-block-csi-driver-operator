@@ -2,6 +2,8 @@ package operator
 
 import (
 	"context"
+	"github.com/openshift/library-go/pkg/operator/resource/resourceapply"
+	"github.com/openshift/library-go/pkg/operator/staticresourcecontroller"
 
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,6 +86,11 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"csidriver.yaml",
 			"node_sa.yaml",
 			"cabundle_cm.yaml",
+			"service.yaml",
+			"rbac/prometheus_role.yaml",
+			"rbac/prometheus_rolebinding.yaml",
+			"rbac/kube_rbac_proxy_role.yaml",
+			"rbac/kube_rbac_proxy_binding.yaml",
 			"rbac/main_attacher_binding.yaml",
 			"rbac/main_provisioner_binding.yaml",
 			"rbac/volumesnapshot_reader_provisioner_binding.yaml",
@@ -132,6 +139,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			configMapInformer.Informer(),
 		},
 		csidrivercontrollerservicecontroller.WithObservedProxyDeploymentHook(),
+		csidrivercontrollerservicecontroller.WithSecretHashAnnotationHook(util.OperatorNamespace, util.MetricsCertSecretName, secretInformer),
 		csidrivercontrollerservicecontroller.WithCABundleDeploymentHook(
 			util.OperatorNamespace,
 			util.TrustedCAConfigMap,

@@ -43,6 +43,7 @@ export NODE_DRIVER_REGISTRAR_IMAGE=registry.k8s.io/sig-storage/csi-node-driver-r
 export LIVENESS_PROBE_IMAGE=registry.k8s.io/sig-storage/livenessprobe:v2.9.0
 export RESIZER_IMAGE=registry.k8s.io/sig-storage/csi-resizer:v1.7.0
 export SNAPSHOTTER_IMAGE=registry.k8s.io/sig-storage/csi-snapshotter:v6.2.1
+export KUBE_RBAC_PROXY_IMAGE=quay.io/openshift/origin-kube-rbac-proxy:latest
 
 # Run the operator via CLI
 ./ibm-vpc-block-csi-driver-operator start --kubeconfig $MY_KUBECONFIG --namespace openshift-cluster-csi-drivers
