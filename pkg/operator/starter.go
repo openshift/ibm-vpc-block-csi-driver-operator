@@ -183,6 +183,18 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		util.Resync,
 		controllerConfig.EventRecorder)
 
+	serviceMonitorController := staticresourcecontroller.NewStaticResourceController(
+		"IBMBlockDriverServiceMonitorController",
+		assets.ReadFile,
+		[]string{"servicemonitor.yaml"},
+		(&resourceapply.ClientHolder{}).WithDynamicClient(dynamicClient),
+		operatorClient,
+		controllerConfig.EventRecorder,
+	).WithIgnoreNotFoundOnCreate()
+
+	klog.Info("Starting ServiceMonitor controller")
+	go serviceMonitorController.Run(ctx, 1)
+
 	klog.Info("Starting the informers")
 	go kubeInformersForNamespaces.Start(ctx.Done())
 	go dynamicInformers.Start(ctx.Done())
