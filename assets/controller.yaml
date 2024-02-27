@@ -27,13 +27,13 @@ spec:
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
     spec:
       containers:
-        - args:
+        - name: csi-resizer
+          image: ${RESIZER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
             - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
-          name: csi-resizer
-          image: ${RESIZER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -44,7 +44,10 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-        - args:
+        - name: csi-provisioner
+          image: ${PROVISIONER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
             - --v=${LOG_LEVEL}
             - --csi-address=$(ADDRESS)
             - --timeout=600s
@@ -52,12 +55,9 @@ spec:
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-          image: ${PROVISIONER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
-          name: csi-provisioner
           resources:
             requests:
               cpu: 10m
@@ -65,16 +65,16 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - args:
+        - name: csi-attacher
+          image: ${ATTACHER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
             - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
-          image: ${ATTACHER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
-          name: csi-attacher
           resources:
             requests:
               cpu: 10m
@@ -82,12 +82,12 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - args:
-            - --csi-address=/csi/csi.sock
-            - --v=${LOG_LEVEL}
+        - name: liveness-probe
           image: ${LIVENESS_PROBE_IMAGE}
           imagePullPolicy: IfNotPresent
-          name: liveness-probe
+          args:
+            - --csi-address=/csi/csi.sock
+            - --v=${LOG_LEVEL}
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -116,7 +116,10 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - args:
+        - name: csi-driver
+          image: ${DRIVER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
             - --v=${LOG_LEVEL}
             - --endpoint=$(CSI_ENDPOINT)
             - --lock_enabled=false
@@ -137,8 +140,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: ibm-vpc-block-csi-configmap
-          image: ${DRIVER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -150,7 +151,6 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 3
-          name: csi-driver
           ports:
             - containerPort: 9808
               name: healthz
