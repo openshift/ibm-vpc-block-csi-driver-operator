@@ -23,4 +23,7 @@ const (
 
 	// Name of the configmap with the injected trusted CA bundle
 	TrustedCAConfigMap = "ibm-vpc-block-csi-driver-trusted-ca-bundle"
+
+	// Name of secret that holds generated serving certificates for metrics service (defined in service.yaml and controller.yaml)
+	MetricsCertSecretName = "ibm-vpc-block-csi-driver-controller-metrics-serving-cert"
 )

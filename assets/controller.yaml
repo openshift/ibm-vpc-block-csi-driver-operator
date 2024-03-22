@@ -27,13 +27,14 @@ spec:
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
     spec:
       containers:
-        - args:
+        - name: csi-resizer
+          image: ${RESIZER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --http-endpoint=localhost:8204
             - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
-          name: csi-resizer
-          image: ${RESIZER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -44,7 +45,36 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-        - args:
+        # kube-rbac-proxy for external-resizer container.
+        # Provides https proxy for http-based metrics.
+        - name: resizer-kube-rbac-proxy
+          image: ${KUBE_RBAC_PROXY_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --secure-listen-address=0.0.0.0:9204
+            - --upstream=http://127.0.0.1:8204/
+            - --tls-cert-file=/etc/tls/private/tls.crt
+            - --tls-private-key-file=/etc/tls/private/tls.key
+            - --tls-cipher-suites=${TLS_CIPHER_SUITES}
+            - --tls-min-version=${TLS_MIN_VERSION}
+            - --logtostderr=true
+          ports:
+            - containerPort: 9204
+              name: resizer-m
+              protocol: TCP
+          resources:
+            requests:
+              memory: 20Mi
+              cpu: 10m
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /etc/tls/private
+              name: metrics-serving-cert
+        - name: csi-provisioner
+          image: ${PROVISIONER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --http-endpoint=localhost:8202
             - --v=${LOG_LEVEL}
             - --csi-address=$(ADDRESS)
             - --timeout=600s
@@ -52,12 +82,9 @@ spec:
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-          image: ${PROVISIONER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
-          name: csi-provisioner
           resources:
             requests:
               cpu: 10m
@@ -65,16 +92,42 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - args:
+        # kube-rbac-proxy for external-provisioner container.
+        # Provides https proxy for http-based metrics.
+        - name: provisioner-kube-rbac-proxy
+          image: ${KUBE_RBAC_PROXY_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --secure-listen-address=0.0.0.0:9202
+            - --upstream=http://127.0.0.1:8202/
+            - --tls-cert-file=/etc/tls/private/tls.crt
+            - --tls-private-key-file=/etc/tls/private/tls.key
+            - --tls-cipher-suites=${TLS_CIPHER_SUITES}
+            - --tls-min-version=${TLS_MIN_VERSION}
+            - --logtostderr=true
+          ports:
+            - containerPort: 9202
+              name: provisioner-m
+              protocol: TCP
+          resources:
+            requests:
+              memory: 20Mi
+              cpu: 10m
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /etc/tls/private
+              name: metrics-serving-cert
+        - name: csi-attacher
+          image: ${ATTACHER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --http-endpoint=localhost:8203
             - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
-          image: ${ATTACHER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
-          name: csi-attacher
           resources:
             requests:
               cpu: 10m
@@ -82,12 +135,37 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - args:
-            - --csi-address=/csi/csi.sock
-            - --v=${LOG_LEVEL}
+        # kube-rbac-proxy for external-attacher container.
+        # Provides https proxy for http-based metrics.
+        - name: attacher-kube-rbac-proxy
+          image: ${KUBE_RBAC_PROXY_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --secure-listen-address=0.0.0.0:9203
+            - --upstream=http://127.0.0.1:8203/
+            - --tls-cert-file=/etc/tls/private/tls.crt
+            - --tls-private-key-file=/etc/tls/private/tls.key
+            - --tls-cipher-suites=${TLS_CIPHER_SUITES}
+            - --tls-min-version=${TLS_MIN_VERSION}
+            - --logtostderr=true
+          ports:
+            - containerPort: 9203
+              name: attacher-m
+              protocol: TCP
+          resources:
+            requests:
+              memory: 20Mi
+              cpu: 10m
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /etc/tls/private
+              name: metrics-serving-cert
+        - name: liveness-probe
           image: ${LIVENESS_PROBE_IMAGE}
           imagePullPolicy: IfNotPresent
-          name: liveness-probe
+          args:
+            - --csi-address=/csi/csi.sock
+            - --v=${LOG_LEVEL}
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -102,6 +180,7 @@ spec:
           image: ${SNAPSHOTTER_IMAGE}
           imagePullPolicy: IfNotPresent
           args:
+            - --http-endpoint=localhost:8205
             - --v=${LOG_LEVEL}
             - --csi-address=/csi/csi.sock
             - --timeout=900s
@@ -116,7 +195,36 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
-        - args:
+        # kube-rbac-proxy for external-snapshotter container.
+        # Provides https proxy for http-based metrics.
+        - name: snapshotter-kube-rbac-proxy
+          image: ${KUBE_RBAC_PROXY_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --secure-listen-address=0.0.0.0:9205
+            - --upstream=http://127.0.0.1:8205/
+            - --tls-cert-file=/etc/tls/private/tls.crt
+            - --tls-private-key-file=/etc/tls/private/tls.key
+            - --tls-cipher-suites=${TLS_CIPHER_SUITES}
+            - --tls-min-version=${TLS_MIN_VERSION}
+            - --logtostderr=true
+          ports:
+            - containerPort: 9205
+              name: snapshotter-m
+              protocol: TCP
+          resources:
+            requests:
+              memory: 20Mi
+              cpu: 10m
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /etc/tls/private
+              name: metrics-serving-cert
+        - name: csi-driver
+          image: ${DRIVER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --metrics-address=localhost:8206
             - --v=${LOG_LEVEL}
             - --endpoint=$(CSI_ENDPOINT)
             - --lock_enabled=false
@@ -137,8 +245,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: ibm-vpc-block-csi-configmap
-          image: ${DRIVER_IMAGE}
-          imagePullPolicy: IfNotPresent
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -150,7 +256,6 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 3
-          name: csi-driver
           ports:
             - containerPort: 9808
               name: healthz
@@ -165,6 +270,31 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
+        # kube-rbac-proxy for driver container.
+        # Provides https proxy for http-based metrics.
+        - name: driver-kube-rbac-proxy
+          image: ${KUBE_RBAC_PROXY_IMAGE}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --secure-listen-address=0.0.0.0:9206
+            - --upstream=http://127.0.0.1:8206/
+            - --tls-cert-file=/etc/tls/private/tls.crt
+            - --tls-private-key-file=/etc/tls/private/tls.key
+            - --tls-cipher-suites=${TLS_CIPHER_SUITES}
+            - --tls-min-version=${TLS_MIN_VERSION}
+            - --logtostderr=true
+          ports:
+            - containerPort: 9206
+              name: driver-m
+              protocol: TCP
+          resources:
+            requests:
+              memory: 20Mi
+              cpu: 10m
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /etc/tls/private
+              name: metrics-serving-cert
       priorityClassName: system-cluster-critical
       serviceAccountName: ibm-vpc-block-controller-sa
       volumes:
@@ -173,3 +303,6 @@ spec:
         - name: customer-auth
           secret:
             secretName: storage-secret-store
+        - name: metrics-serving-cert
+          secret:
+            secretName: ibm-vpc-block-csi-driver-controller-metrics-serving-cert
