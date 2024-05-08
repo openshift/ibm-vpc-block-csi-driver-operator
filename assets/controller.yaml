@@ -45,6 +45,7 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
+          terminationMessagePolicy: FallbackToLogsOnError
         # kube-rbac-proxy for external-resizer container.
         # Provides https proxy for http-based metrics.
         - name: resizer-kube-rbac-proxy
@@ -92,6 +93,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
+          terminationMessagePolicy: FallbackToLogsOnError
         # kube-rbac-proxy for external-provisioner container.
         # Provides https proxy for http-based metrics.
         - name: provisioner-kube-rbac-proxy
@@ -135,6 +137,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
+          terminationMessagePolicy: FallbackToLogsOnError
         # kube-rbac-proxy for external-attacher container.
         # Provides https proxy for http-based metrics.
         - name: attacher-kube-rbac-proxy
@@ -176,6 +179,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
+          terminationMessagePolicy: FallbackToLogsOnError
         - name: csi-snapshotter
           image: ${SNAPSHOTTER_IMAGE}
           imagePullPolicy: IfNotPresent
@@ -195,6 +199,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
+          terminationMessagePolicy: FallbackToLogsOnError
         # kube-rbac-proxy for external-snapshotter container.
         # Provides https proxy for http-based metrics.
         - name: snapshotter-kube-rbac-proxy
@@ -270,6 +275,7 @@ spec:
             - mountPath: /etc/storage_ibmc
               name: customer-auth
               readOnly: true
+          terminationMessagePolicy: FallbackToLogsOnError
         # kube-rbac-proxy for driver container.
         # Provides https proxy for http-based metrics.
         - name: driver-kube-rbac-proxy

@@ -75,6 +75,7 @@ spec:
               name: plugin-dir
             - mountPath: /registration
               name: registration-dir
+          terminationMessagePolicy: FallbackToLogsOnError
         - args:
             - --v=${LOG_LEVEL}
             - --endpoint=unix:/csi/csi.sock
@@ -130,6 +131,7 @@ spec:
               readOnly: true
             - name: etc-selinux
               mountPath: /etc/selinux
+          terminationMessagePolicy: FallbackToLogsOnError
         - args:
             - --csi-address=/csi/csi.sock
             - --v=${LOG_LEVEL}
@@ -147,6 +149,7 @@ spec:
           volumeMounts:
             - mountPath: /csi
               name: plugin-dir
+          terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: ibm-vpc-block-node-sa
       priorityClassName: system-node-critical
       tolerations:
