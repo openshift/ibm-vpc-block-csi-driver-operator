@@ -26,6 +26,19 @@ spec:
         # This annotation prevents eviction from the cluster-autoscaler
         cluster-autoscaler.kubernetes.io/enable-ds-eviction: "false"
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              # The region and zone labels are set on nodes by the installer based on
+              # the the platform config in install-config.yaml. ibm-vpc-block-csi-driver
+              # checks these tags during initialization and exits if they are not set.
+              # If a node is later added without these, the daemonset can not run there.
+              - key: topology.kubernetes.io/region
+                operator: Exists
+              - key: topology.kubernetes.io/zone
+                operator: Exists
       containers:
         - args:
             - --v=${LOG_LEVEL}
