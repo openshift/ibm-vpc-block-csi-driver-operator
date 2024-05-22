@@ -2,7 +2,7 @@ module github.com/openshift/ibm-vpc-block-csi-driver-operator
 
 go 1.21
 
-toolchain go1.21.3
+toolchain go1.21.7
 
 require (
 	github.com/IBM/go-sdk-core/v5 v5.15.1
