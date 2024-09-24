@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+
 	"github.com/openshift/library-go/pkg/operator/resource/resourceapply"
 	"github.com/openshift/library-go/pkg/operator/staticresourcecontroller"
 
@@ -81,28 +82,28 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		kubeInformersForNamespaces,
 		assets.ReadFile,
 		[]string{
-			"configmap.yaml",
-			"controller_sa.yaml",
-			"csidriver.yaml",
-			"node_sa.yaml",
-			"cabundle_cm.yaml",
-			"service.yaml",
+			"rbac/privileged_role.yaml",
+			"rbac/node_privileged_binding.yaml",
 			"rbac/prometheus_role.yaml",
 			"rbac/prometheus_rolebinding.yaml",
 			"rbac/kube_rbac_proxy_role.yaml",
 			"rbac/kube_rbac_proxy_binding.yaml",
+			"rbac/initcontainer_role.yaml",
+			"rbac/initcontainer_rolebinding.yaml",
+			"rbac/lease_leader_election_role.yaml",
+			"rbac/lease_leader_election_rolebinding.yaml",
 			"rbac/main_attacher_binding.yaml",
 			"rbac/main_provisioner_binding.yaml",
 			"rbac/volumesnapshot_reader_provisioner_binding.yaml",
 			"rbac/configmap_and_secret_reader_provisioner_binding.yaml",
-			"rbac/node_privileged_binding.yaml",
-			"rbac/privileged_role.yaml",
 			"rbac/main_resizer_binding.yaml",
-			"rbac/initcontainer_role.yaml",
-			"rbac/initcontainer_rolebinding.yaml",
 			"rbac/main_snapshotter_binding.yaml",
-			"rbac/lease_leader_election_role.yaml",
-			"rbac/lease_leader_election_rolebinding.yaml",
+			"configmap.yaml",
+			"csidriver.yaml",
+			"service.yaml",
+			"cabundle_cm.yaml",
+			"controller_sa.yaml",
+			"node_sa.yaml",
 		},
 	).WithConditionalStaticResourcesController(
 		"IBMBlockDriverConditionalStaticResourcesController",
