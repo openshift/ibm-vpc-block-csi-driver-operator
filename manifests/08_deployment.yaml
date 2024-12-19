@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         name: ibm-vpc-block-csi-driver-operator
+      annotations:
+        openshift.io/required-scc: restricted-v2
     spec:
       containers:
       - args:

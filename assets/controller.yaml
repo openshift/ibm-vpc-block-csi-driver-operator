@@ -25,6 +25,7 @@ spec:
         app: ibm-vpc-block-csi-driver
       annotations:
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+        openshift.io/required-scc: restricted-v2
     spec:
       containers:
         - name: csi-resizer
