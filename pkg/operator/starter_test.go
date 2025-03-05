@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
 	"github.com/openshift/library-go/pkg/operator/events"
+	clocktesting "k8s.io/utils/clock/testing"
 )
 
 const (
@@ -34,7 +35,9 @@ func fakeEventRecorder() events.Recorder {
 		clientset.CoreV1().Events(Namespace),
 		record.CorrelatorOptions{},
 		"",
-		controllerRef)
+		controllerRef,
+		clocktesting.NewFakePassiveClock(time.Now()),
+	)
 	return eventRecorder
 }
 

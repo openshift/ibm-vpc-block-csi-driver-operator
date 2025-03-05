@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"k8s.io/component-base/cli"
+	"k8s.io/utils/clock"
 
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/operator"
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/version"
@@ -33,6 +34,7 @@ func NewOperatorCommand() *cobra.Command {
 		"ibm-vpc-block-csi-driver-operator",
 		version.Get(),
 		operator.RunOperator,
+		clock.RealClock{},
 	).NewCommandWithContext(context.Background())
 	ctrlCmd.Use = "start"
 	ctrlCmd.Short = "Start the IBM VPC Block CSI Driver Operator"
