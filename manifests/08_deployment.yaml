@@ -39,6 +39,8 @@ spec:
         image: quay.io/ocs-roks-team/origin-ibm-vpc-block-csi-driver-operator:latest
         imagePullPolicy: Always
         name: ibm-vpc-block-csi-driver-operator
+      securityContext:
+        readOnlyRootFilesystem: true
       priorityClassName: system-cluster-critical
       serviceAccountName: ibm-vpc-block-csi-driver-operator
       nodeSelector:
