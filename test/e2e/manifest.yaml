@@ -24,6 +24,7 @@ DriverInfo:
     pvcDataSource: false
     multipods: false
     RWX: false
+    offlineExpansion: false
     controllerExpansion: true
     nodeExpansion: true
     volumeLimits: false
