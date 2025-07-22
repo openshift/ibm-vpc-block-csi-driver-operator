@@ -24,6 +24,7 @@ spec:
         openshift.storage.network-policy.all-egress: allow
         openshift.storage.network-policy.api-server: allow
         openshift.storage.network-policy.dns: allow
+        openshift.storage.network-policy.ibm-vpc-block-metrics: allow
       annotations:
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
         # This annotation prevents eviction from the cluster-autoscaler
