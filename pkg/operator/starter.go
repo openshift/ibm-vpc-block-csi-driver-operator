@@ -118,6 +118,7 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 			"cabundle_cm.yaml",
 			"controller_sa.yaml",
 			"node_sa.yaml",
+			"network-policy-allow-ingress-to-csi-driver-metrics.yaml",
 		},
 	).WithConditionalStaticResourcesController(
 		"IBMBlockDriverConditionalStaticResourcesController",
