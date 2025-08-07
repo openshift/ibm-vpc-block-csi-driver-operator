@@ -35,6 +35,8 @@ import (
 	"github.com/openshift/library-go/pkg/operator/v1helpers"
 )
 
+// DUMMY CHANGE
+
 const (
 	encryptionKeyParameter = "encryptionKey"
 	encryptedParameter     = "encrypted"

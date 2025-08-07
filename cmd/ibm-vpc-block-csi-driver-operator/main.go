@@ -14,6 +14,8 @@ import (
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
 )
 
+// DUMMY CHANGE
+
 func main() {
 	command := NewOperatorCommand()
 	code := cli.Run(command)
