@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/openshift/ibm-vpc-block-csi-driver-operator
 COPY . .
 RUN make
 
-FROM registry.ci.openshift.org/ocp/4.22:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.22:base-rhel9-minimal
 COPY --from=builder /go/src/github.com/openshift/ibm-vpc-block-csi-driver-operator/ibm-vpc-block-csi-driver-operator /usr/bin
 COPY manifests /manifests
 ENTRYPOINT ["/usr/bin/ibm-vpc-block-csi-driver-operator"]
