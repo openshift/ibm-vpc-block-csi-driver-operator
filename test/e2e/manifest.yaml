@@ -20,7 +20,7 @@ DriverInfo:
     block: true
     exec: true
     fsGroup: false
-    snapshotDataSource: false
+    snapshotDataSource: true
     pvcDataSource: false
     multipods: false
     RWX: false
