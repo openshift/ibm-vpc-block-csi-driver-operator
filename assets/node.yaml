@@ -59,6 +59,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: VOLUME_ATTACHMENT_LIMIT
+              value: "12"
           image: ${NODE_DRIVER_REGISTRAR_IMAGE}
           imagePullPolicy: IfNotPresent
           lifecycle:
@@ -75,6 +77,7 @@ spec:
           securityContext:
             runAsNonRoot: false
             runAsUser: 0
+            runAsGroup: 0
             privileged: false
             readOnlyRootFilesystem: true
           livenessProbe:
@@ -103,6 +106,16 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: IS_NODE_SERVER
+              value: "true"
+            - name: SIDECAR_GROUP_ID
+              value: "2121"
+            - name: UDEVADM_SETTLE_TIMEOUT
+              value: "30"
+            - name: UDEVADM_MAX_RETRIES
+              value: "15"
+            - name: UDEVADM_RETRY_INTERVAL
+              value: "2s"
           envFrom:
             - configMapRef:
                 name: ibm-vpc-block-csi-configmap
@@ -123,11 +136,12 @@ spec:
               protocol: TCP
           resources:
             requests:
-              cpu: 20m
-              memory: 50Mi
+              cpu: 30m
+              memory: 75Mi
           securityContext:
             runAsNonRoot: false
             runAsUser: 0
+            runAsGroup: 0
             privileged: true
             readOnlyRootFilesystem: true
           volumeMounts:
@@ -159,10 +173,14 @@ spec:
           imagePullPolicy: IfNotPresent
           name: liveness-probe
           securityContext:
-            runAsNonRoot: false
-            runAsUser: 0
+            runAsNonRoot: true
+            runAsUser: 2121
+            runAsGroup: 2121
             privileged: false
             readOnlyRootFilesystem: true
+            seLinuxOptions: # seLinux label is set as a precaution for accessing csi socket
+              type: spc_t
+              level: s0
           resources:
             requests:
               cpu: 5m

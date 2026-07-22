@@ -93,8 +93,8 @@ spec:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: 20m
+              memory: 40Mi
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -137,8 +137,8 @@ spec:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: 10m
-              memory: 20Mi
+              cpu: 15m
+              memory: 30Mi
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -199,8 +199,8 @@ spec:
             allowPrivilegeEscalation: false
           resources:
             requests:
-              cpu: 10m
-              memory: 50Mi
+              cpu: 20m
+              memory: 40Mi
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -252,6 +252,12 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            - name: MAX_VPC_RETRY_ATTEMPT
+              value: "46"
+            - name: MIN_VPC_RETRY_INTERVAL
+              value: "3"
+            - name: MIN_VPC_RETRY_INTERVAL_ATTEMPT
+              value: "3"
           envFrom:
             - configMapRef:
                 name: ibm-vpc-block-csi-configmap
@@ -272,8 +278,8 @@ spec:
               protocol: TCP
           resources:
             requests:
-              cpu: 50m
-              memory: 100Mi
+              cpu: 75m
+              memory: 150Mi
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
