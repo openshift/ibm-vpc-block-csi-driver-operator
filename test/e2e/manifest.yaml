@@ -30,3 +30,5 @@ DriverInfo:
     volumeLimits: false
     topology: true
     multiplePVsSameID: true
+Timeouts:
+  SnapshotCreate: 10m
