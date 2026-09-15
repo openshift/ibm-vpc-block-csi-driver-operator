@@ -30,3 +30,4 @@ DriverInfo:
     volumeLimits: false
     topology: true
     multiplePVsSameID: true
+    seLinuxMount: true
