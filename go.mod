@@ -6,10 +6,10 @@ require (
 	github.com/IBM/go-sdk-core/v5 v5.23.1
 	github.com/IBM/platform-services-go-sdk v0.101.0
 	github.com/google/go-cmp v0.7.0
-	github.com/openshift/api v0.0.0-20260721120239-14262bf791c8
+	github.com/openshift/api v0.0.0-20260805215214-cfb63858e9d7
 	github.com/openshift/build-machinery-go v0.0.0-20250530140348-dc5b2804eeee
-	github.com/openshift/client-go v0.0.0-20260721124015-35d8f3c0e847
-	github.com/openshift/library-go v0.0.0-20260721103755-0c9fbc9f043a
+	github.com/openshift/client-go v0.0.0-20260806041845-b74fb348f1e7
+	github.com/openshift/library-go v0.0.0-20261001164550-3a828ca2a7e0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	k8s.io/api v0.36.2
