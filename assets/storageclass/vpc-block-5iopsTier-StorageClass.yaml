@@ -1,0 +1,21 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app: ibm-vpc-block-csi-driver
+    razee/force-apply: "true"
+  name: ibmc-vpc-block-5iops-tier
+parameters:
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: "false"
+  encryptionKey: ""
+  profile: 5iops-tier
+  region: ""
+  resourceGroup: ""
+  tags: ""
+  zone: ""
+provisioner: vpc.block.csi.ibm.io
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer

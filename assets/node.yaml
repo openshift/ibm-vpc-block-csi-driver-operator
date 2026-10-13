@@ -1,0 +1,217 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    addonmanager.kubernetes.io/mode: Reconcile
+    app: ibm-vpc-block-csi-driver
+  name: ibm-vpc-block-csi-node
+  namespace: openshift-cluster-csi-drivers
+  annotations:
+    config.openshift.io/inject-proxy: csi-driver
+    config.openshift.io/inject-proxy-cabundle: csi-driver
+spec:
+  selector:
+    matchLabels:
+      app: ibm-vpc-block-csi-driver
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+  template:
+    metadata:
+      labels:
+        app: ibm-vpc-block-csi-driver
+        openshift.storage.network-policy.all-egress: allow
+        openshift.storage.network-policy.api-server: allow
+        openshift.storage.network-policy.dns: allow
+        openshift.storage.network-policy.ibm-vpc-block-metrics: allow
+      annotations:
+        target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
+        # This annotation prevents eviction from the cluster-autoscaler
+        cluster-autoscaler.kubernetes.io/enable-ds-eviction: "false"
+        openshift.io/required-scc: privileged
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              # The region and zone labels are set on nodes by the installer based on
+              # the the platform config in install-config.yaml. ibm-vpc-block-csi-driver
+              # checks these tags during initialization and exits if they are not set.
+              # If a node is later added without these, the daemonset can not run there.
+              - key: topology.kubernetes.io/region
+                operator: Exists
+              - key: topology.kubernetes.io/zone
+                operator: Exists
+      containers:
+        - args:
+            - --v=${LOG_LEVEL}
+            - --csi-address=$(ADDRESS)
+            - --http-endpoint=:10303
+            - --kubelet-registration-path=$(DRIVER_REGISTRATION_SOCK)
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REGISTRATION_SOCK
+              value: /var/lib/kubelet/plugins/vpc.block.csi.ibm.io/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: ${NODE_DRIVER_REGISTRAR_IMAGE}
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - rm -rf /registration/vpc.block.csi.ibm.io /registration/vpc.block.csi.ibm.io-reg.sock
+          name: csi-driver-registrar
+          ports:
+            - containerPort: 10303
+              name: rhealthz
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            privileged: false
+            readOnlyRootFilesystem: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: rhealthz
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+            periodSeconds: 10
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: plugin-dir
+            - mountPath: /registration
+              name: registration-dir
+          terminationMessagePolicy: FallbackToLogsOnError
+        - args:
+            - --v=${LOG_LEVEL}
+            - --endpoint=unix:/csi/csi.sock
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+            - configMapRef:
+                name: ibm-vpc-block-csi-configmap
+          image: ${DRIVER_IMAGE}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          name: csi-driver
+          ports:
+            - containerPort: 9808
+              name: healthz
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 20m
+              memory: 50Mi
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            privileged: true
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /var/lib/kubelet
+              mountPropagation: Bidirectional
+              name: kubelet-data-dir
+            - mountPath: /csi
+              name: plugin-dir
+            - mountPath: /dev
+              name: device-dir
+            - mountPath: /etc/udev
+              name: etcudevpath
+            - mountPath: /run/udev
+              name: runudevpath
+            - mountPath: /lib/udev
+              name: libudevpath
+            - mountPath: /sys
+              name: syspath
+            - mountPath: /etc/storage_ibmc
+              name: customer-auth
+              readOnly: true
+            - name: etc-selinux
+              mountPath: /etc/selinux
+          terminationMessagePolicy: FallbackToLogsOnError
+        - args:
+            - --csi-address=/csi/csi.sock
+            - --v=${LOG_LEVEL}
+          image: ${LIVENESS_PROBE_IMAGE}
+          imagePullPolicy: IfNotPresent
+          name: liveness-probe
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            privileged: false
+            readOnlyRootFilesystem: true
+          resources:
+            requests:
+              cpu: 5m
+              memory: 10Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: plugin-dir
+          terminationMessagePolicy: FallbackToLogsOnError
+      serviceAccountName: ibm-vpc-block-node-sa
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: Exists
+      volumes:
+        - hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: Directory
+          name: registration-dir
+        - hostPath:
+            path: /var/lib/kubelet
+            type: Directory
+          name: kubelet-data-dir
+        - hostPath:
+            path: /var/lib/kubelet/plugins/vpc.block.csi.ibm.io/
+            type: DirectoryOrCreate
+          name: plugin-dir
+        - hostPath:
+            path: /dev
+            type: Directory
+          name: device-dir
+        - hostPath:
+            path: /etc/udev
+            type: Directory
+          name: etcudevpath
+        - hostPath:
+            path: /run/udev
+            type: Directory
+          name: runudevpath
+        - hostPath:
+            path: /lib/udev
+            type: Directory
+          name: libudevpath
+        - hostPath:
+            path: /sys
+            type: Directory
+          name: syspath
+        - name: customer-auth
+          secret:
+            secretName: storage-secret-store
+        - name: etc-selinux
+          hostPath:
+            path: /etc/selinux
+            type: DirectoryOrCreate

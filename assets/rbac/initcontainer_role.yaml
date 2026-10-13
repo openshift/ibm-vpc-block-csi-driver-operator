@@ -1,0 +1,12 @@
+---
+ kind: ClusterRole
+ apiVersion: rbac.authorization.k8s.io/v1
+ metadata:
+   name: vpc-block-initcontainer-role
+   labels:
+     app: ibm-vpc-block-csi-driver
+     addonmanager.kubernetes.io/mode: Reconcile
+ rules:
+   - apiGroups: [""]
+     resources: ["nodes"]
+     verbs: ["get", "list", "update"]
