@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/openshift/library-go/pkg/operator/resource/resourceapply"
 	"github.com/openshift/library-go/pkg/operator/staticresourcecontroller"
@@ -28,6 +29,7 @@ import (
 	"github.com/openshift/ibm-vpc-block-csi-driver-operator/pkg/util"
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
 	"github.com/openshift/library-go/pkg/controller/factory"
+	"github.com/openshift/library-go/pkg/operator/configobserver/featuregates"
 	"github.com/openshift/library-go/pkg/operator/csi/csicontrollerset"
 	"github.com/openshift/library-go/pkg/operator/csi/csidrivercontrollerservicecontroller"
 	"github.com/openshift/library-go/pkg/operator/csi/csidrivernodeservicecontroller"
@@ -38,6 +40,8 @@ import (
 const (
 	encryptionKeyParameter = "encryptionKey"
 	encryptedParameter     = "encrypted"
+
+	operatorImageVersionEnvVarName = "OPERATOR_IMAGE_VERSION"
 )
 
 func RunOperator(ctx context.Context, controllerConfig *controllercmd.ControllerContext) error {
@@ -82,6 +86,25 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 	if err != nil {
 		return err
 	}
+
+	// Build a FeatureGateAccess so the CSI config observer can honor the
+	// TLSGroupPreferences feature gate when observing TLS group (curve)
+	// preferences. The observer tolerates feature gates not being observed yet
+	// and re-syncs once they are, so we do not block here.
+	version := os.Getenv(operatorImageVersionEnvVarName)
+	missingVersion := "0.0.1-snapshot"
+	if version == "" {
+		version = missingVersion // No OPERATOR_IMAGE_VERSION; derive from ClusterVersion
+	}
+
+	featureGateAccessor := featuregates.NewFeatureGateAccess(
+		version,
+		missingVersion,
+		configInformers.Config().V1().ClusterVersions(),
+		configInformers.Config().V1().FeatureGates(),
+		controllerConfig.EventRecorder,
+	)
+	go featureGateAccessor.Run(ctx)
 
 	csiControllerSet := csicontrollerset.NewCSIControllerSet(
 		operatorClient,
@@ -139,9 +162,10 @@ func RunOperator(ctx context.Context, controllerConfig *controllercmd.Controller
 		func() bool {
 			return false
 		},
-	).WithCSIConfigObserverController(
+	).WithCSIConfigObserverControllerWithFeatureGates(
 		"IBMBlockDriverCSIConfigObserverController",
 		configInformers,
+		featureGateAccessor,
 	).WithCSIDriverControllerService(
 		"IBMBlockDriverControllerServiceController",
 		assets.ReadFile,
