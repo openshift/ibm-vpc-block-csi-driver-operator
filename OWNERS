@@ -5,6 +5,6 @@ approvers:
 - dobsonj
 - RomanBednar
 - mpatlasov
-- rhrmo
 - dfajmon
+- rhrmo
 component: "Storage / Operators"
